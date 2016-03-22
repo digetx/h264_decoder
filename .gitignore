@@ -1,0 +1,4 @@
+.*
+*.o
+h264_decode
+test.h264
