@@ -239,7 +239,6 @@ void mb_apply_luma_prediction_4x4(const decoder_context *decoder,
 					case 2:
 					case 4:
 					case 6:
-						assert(j - (i >> 1) >= 0);
 						if (j - (i >> 1) - 1 == -1) {
 							pred = tmp[8];
 						} else {
@@ -250,7 +249,6 @@ void mb_apply_luma_prediction_4x4(const decoder_context *decoder,
 					case 1:
 					case 3:
 					case 5:
-						assert(j - (i >> 1) - 1 >= 0);
 						if (j - (i >> 1) - 2 == -1) {
 							pred = tmp[8];
 						} else {
@@ -262,7 +260,6 @@ void mb_apply_luma_prediction_4x4(const decoder_context *decoder,
 						pred = (tmp[4] + 2 * tmp[8] + tmp[0] + 2) >> 2;
 						break;
 					default:
-						assert(i - 2 >= 0);
 						if (i - 3 == -1) {
 							pred = tmp[8];
 						} else {
@@ -311,7 +308,6 @@ void mb_apply_luma_prediction_4x4(const decoder_context *decoder,
 					case 2:
 					case 4:
 					case 6:
-						assert(i - (j >> 1) >= 0);
 						if (i - (j >> 1) - 1 == -1) {
 							pred = tmp[8];
 						} else {
@@ -322,7 +318,6 @@ void mb_apply_luma_prediction_4x4(const decoder_context *decoder,
 					case 1:
 					case 3:
 					case 5:
-						assert(i - (j >> 1) - 1 >= 0);
 						if (i - (j >> 1) - 2 == -1) {
 							pred = tmp[8];
 						} else {
@@ -334,7 +329,6 @@ void mb_apply_luma_prediction_4x4(const decoder_context *decoder,
 						pred = (tmp[0] + 2 * tmp[8] + tmp[4] + 2) >> 2;
 						break;
 					default:
-						assert(j - 2 >= 0);
 						if (j - 3 == -1) {
 							pred = tmp[8];
 						} else {
