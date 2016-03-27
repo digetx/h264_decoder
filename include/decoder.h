@@ -158,13 +158,6 @@ typedef struct slice_header {
 	unsigned long_term_reference_flag:1;
 } slice_header;
 
-typedef enum {
-	TOP_LEFT,
-	TOP_RIGHT,
-	BOTTOM_LEFT,
-	BOTTOM_RIGHT,
-} sub_mb_pos;
-
 typedef struct macro_sub_block {
 	uint8_t totalcoeff;
 	int16_t coeffs[16];
