@@ -59,7 +59,7 @@ static int is_MP4(bitstream_reader *reader)
 	SYNTAX_IPRINT("Brand: %c%c%c%c\n", U32C(brand));
 	SYNTAX_IPRINT("Version: 0x%08X\n", version);
 
-	size = (size >> 2) - 2;
+	size = (size >> 2) - 4;
 
 	if (size != 0) {
 		SYNTAX_IPRINT("Compatible with: ");
