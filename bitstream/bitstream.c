@@ -162,7 +162,7 @@ uint8_t bitstream_read_rbsp_align(bitstream_reader *reader)
 		return 0;
 	}
 
-	return bitstream_read_u(reader, reader->bit_shift);
+	return bitstream_read_u(reader, 8 - reader->bit_shift);
 }
 
 uint32_t bitstream_read_next_word(bitstream_reader *reader)
