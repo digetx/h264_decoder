@@ -57,13 +57,14 @@ void parse_SPS(decoder_context *decoder)
 	decoder->sps.constraint_set3_flag	= bitstream_read_u(reader, 1);
 	decoder->sps.constraint_set4_flag	= bitstream_read_u(reader, 1);
 	decoder->sps.constraint_set5_flag	= bitstream_read_u(reader, 1);
-	decoder->sps.reserved_zero_2bits	= bitstream_read_u(reader, 2);
-	decoder->sps.level_idc			= bitstream_read_u(reader, 8);
-	decoder->sps.seq_parameter_set_id	= bitstream_read_ue(reader);
 
-	if (decoder->sps.reserved_zero_2bits != 0) {
+	/* reserved_zero_2bits */
+	if (bitstream_read_u(reader, 2) != 0) {
 		SYNTAX_ERR("SPS is malformed\n");
 	}
+
+	decoder->sps.level_idc			= bitstream_read_u(reader, 8);
+	decoder->sps.seq_parameter_set_id	= bitstream_read_ue(reader);
 
 	SYNTAX_IPRINT("profile_idc = %u\n", decoder->sps.profile_idc);
 	SYNTAX_IPRINT("constraint_set0_flag = %u\n", decoder->sps.constraint_set0_flag);
@@ -72,7 +73,6 @@ void parse_SPS(decoder_context *decoder)
 	SYNTAX_IPRINT("constraint_set3_flag = %u\n", decoder->sps.constraint_set3_flag);
 	SYNTAX_IPRINT("constraint_set4_flag = %u\n", decoder->sps.constraint_set4_flag);
 	SYNTAX_IPRINT("constraint_set5_flag = %u\n", decoder->sps.constraint_set5_flag);
-	SYNTAX_IPRINT("reserved_zero_2bits = %u\n", decoder->sps.reserved_zero_2bits);
 	SYNTAX_IPRINT("level_idc = %u\n", decoder->sps.level_idc);
 	SYNTAX_IPRINT("seq_parameter_set_id = %u\n", decoder->sps.seq_parameter_set_id);
 

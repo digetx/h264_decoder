@@ -44,7 +44,6 @@ typedef struct decoder_context_sps {
 	unsigned constraint_set3_flag:1;
 	unsigned constraint_set4_flag:1;
 	unsigned constraint_set5_flag:1;
-	unsigned reserved_zero_2bits:2;
 	unsigned level_idc:8;
 	uint32_t seq_parameter_set_id;
 	uint32_t chroma_format_idc;
