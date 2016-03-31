@@ -54,6 +54,8 @@ void parse_slice_header(decoder_context *decoder)
 	SYNTAX_IPRINT("slice_type %u = \"%s\"\n", decoder->sh.slice_type, SLICE_TYPE(decoder->sh.slice_type));
 	SYNTAX_IPRINT("pic_parameter_set_id = %u\n", decoder->sh.pic_parameter_set_id);
 
+	decoder->sh.slice_type %= 5;
+
 	if (decoder->sps.separate_colour_plane_flag) {
 		decoder->sh.colour_plane_id = bitstream_read_u(reader, 2);
 
