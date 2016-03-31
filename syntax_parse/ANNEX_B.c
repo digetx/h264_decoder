@@ -23,6 +23,8 @@ void parse_annex_b(decoder_context *decoder)
 {
 	bitstream_reader *reader = &decoder->reader;
 
+	decoder->NAL_start_delim = 1;
+
 	do {
 		if (!seek_to_NAL_start(reader)) {
 			break;

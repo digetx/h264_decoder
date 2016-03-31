@@ -211,6 +211,8 @@ typedef struct decoder_context {
 	nal_header   nal;
 	slice_header sh;
 	slice_data   sd;
+
+	int NAL_start_delim;
 } decoder_context;
 
 void decoder_init(decoder_context *decoder, void *data, uint32_t size);

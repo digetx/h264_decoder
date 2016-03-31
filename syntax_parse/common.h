@@ -29,11 +29,16 @@
 #include "decoder.h"
 #include "syntax_parse.h"
 
-#define SYNTAX_ERR(f, ...)				\
+#define SYNTAX_WARN(f, ...)				\
 {							\
 	fprintf(stderr, "%s:%d:\n", __FILE__, __LINE__);\
 	fprintf(stderr, "error! syntax_parse: %s: "	\
 		f, __func__, ## __VA_ARGS__);		\
+}
+
+#define SYNTAX_ERR(f, ...)				\
+{							\
+	SYNTAX_WARN(f, ## __VA_ARGS__)			\
 	exit(EXIT_FAILURE);				\
 }
 
@@ -94,5 +99,7 @@ void macroblock_prediction_mode_intra_4x4(const decoder_context *decoder,
 
 void residual(const decoder_context *decoder, macroblock *mb, unsigned mb_id,
 	      int startIdx, int endIdx, unsigned CBPLuma, unsigned CBPChroma);
+
+int more_rbsp_data(decoder_context *decoder);
 
 #endif // SYNTAX_COMMON_H

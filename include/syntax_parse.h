@@ -30,6 +30,8 @@
 
 void parse_annex_b(decoder_context *decoder);
 
+int parse_mp4(decoder_context *decoder);
+
 int MbPartPredMode(const macroblock *mb, int slice_type);
 
 signed get_mb_id_left(const decoder_context *decoder, unsigned mb_id);

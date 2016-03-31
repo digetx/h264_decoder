@@ -157,7 +157,7 @@ void parse_PPS(decoder_context *decoder)
 	SYNTAX_IPRINT("redundant_pic_cnt_present_flag = %u\n",
 		      decoder->pps.redundant_pic_cnt_present_flag);
 
-	if (is_NAL_start_code(reader)) {
+	if (!more_rbsp_data(decoder)) {
 		goto end;
 	}
 

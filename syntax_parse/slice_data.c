@@ -20,8 +20,20 @@
 #define MbaffFrameFlag	\
 	(decoder->sps.mb_adaptive_frame_field_flag && !decoder->sh.field_pic_flag)
 
-static int more_rbsp_data(bitstream_reader *reader)
+static int is_end_of_NAL(decoder_context *decoder)
 {
+	bitstream_reader *reader = &decoder->reader;
+
+	if (!decoder->NAL_start_delim) {
+		return (reader->data_offset >= reader->bitstream_end);
+	}
+
+	return is_NAL_start_code(reader);
+}
+
+int more_rbsp_data(decoder_context *decoder)
+{
+	bitstream_reader *reader = &decoder->reader;
 	uint32_t data_offset = reader->data_offset;
 	uint8_t bit_shift = reader->bit_shift;
 
@@ -32,7 +44,7 @@ static int more_rbsp_data(bitstream_reader *reader)
 
 	reader->rbsp_mode = 0;
 
-	if (is_NAL_start_code(reader)) {
+	if (is_end_of_NAL(decoder)) {
 		return 0;
 	}
 
@@ -40,7 +52,7 @@ static int more_rbsp_data(bitstream_reader *reader)
 		goto more_data;
 	}
 
-	while (!is_NAL_start_code(reader)) {
+	while (!is_end_of_NAL(decoder)) {
 		if (bitstream_read_u(reader, 8) != 0) {
 			goto more_data;
 		}
@@ -104,7 +116,7 @@ void parse_slice_data(decoder_context *decoder)
 				}
 
 				if (decoder->sd.mb_skip_run) {
-					moreDataFlag = more_rbsp_data(reader);
+					moreDataFlag = more_rbsp_data(decoder);
 				}
 			} else {
 				decoder->sd.mb_skip_run = bitstream_read_ae(reader);
@@ -134,7 +146,7 @@ void parse_slice_data(decoder_context *decoder)
 		}
 
 		if (!CABAC_MODE) {
-			moreDataFlag = more_rbsp_data(reader);
+			moreDataFlag = more_rbsp_data(decoder);
 		} else {
 // 			if( slice_type != I && slice_type != SI )
 // 			prevMbSkipped = mb_skip_flag

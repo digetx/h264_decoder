@@ -85,7 +85,9 @@ int main(int argc, char **argv)
 		decoder_set_notify(&decoder, save_decoded_frame, fp_out);
 	}
 
-	parse_annex_b(&decoder);
+	if (!parse_mp4(&decoder)) {
+		parse_annex_b(&decoder);
+	}
 
 	return 0;
 }
