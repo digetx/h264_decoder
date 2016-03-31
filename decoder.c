@@ -50,10 +50,8 @@ void decoder_set_notify(decoder_context *decoder,
 	decoder->opaque = opaque;
 }
 
-void decoder_reset_context(decoder_context *decoder)
+static void decoder_reset_context(decoder_context *decoder)
 {
-	uint8_t *decoded_image = decoder->decoded_image;
-
 	free(decoder->sps.offset_for_ref_frame);
 	free(decoder->pps.run_length_minus1);
 	free(decoder->pps.top_left);
@@ -68,8 +66,6 @@ void decoder_reset_context(decoder_context *decoder)
 	bzero(&decoder->nal, sizeof(decoder->nal));
 	bzero(&decoder->sh, sizeof(decoder->sh));
 	bzero(&decoder->sd, sizeof(decoder->sd));
-
-	decoder->decoded_image = decoded_image;
 }
 
 size_t decoder_image_frame_size(decoder_context *decoder)
