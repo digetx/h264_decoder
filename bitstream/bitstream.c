@@ -144,7 +144,7 @@ void bitstream_init(bitstream_reader *reader, void *data, uint32_t size)
 
 static int check_range(bitstream_reader *reader, uint32_t offset)
 {
-	if (reader->data_offset + offset > reader->bitstream_end) {
+	if (reader->data_offset + offset >= reader->bitstream_end) {
 		BITSTREAM_ERR("Reached data stream end\n");
 	}
 
@@ -170,7 +170,7 @@ uint32_t bitstream_read_next_word(bitstream_reader *reader)
 	uint32_t offset = reader->data_offset;
 	int align = (reader->bit_shift == 0) ? 0 : 1;
 
-	if (check_range(reader, align + 4) != 0) {
+	if (check_range(reader, align + 3) != 0) {
 		return 0;
 	}
 
@@ -223,7 +223,7 @@ static uint8_t bitstream_read_u8_no_inc(bitstream_reader *reader)
 		return 0;
 	}
 
-	if (check_range(reader, 1) != 0) {
+	if (check_range(reader, 0) != 0) {
 		return 0;
 	}
 
@@ -247,7 +247,7 @@ static uint32_t bitstream_read_bits(bitstream_reader *reader, uint8_t bits_nb,
 	assert(bits_nb != 0);
 	assert(bits_nb <= 32);
 
-	if (check_range(reader, bytes_to_read) != 0) {
+	if (inc_offset && check_range(reader, bytes_to_read) != 0) {
 		return 0;
 	}
 
