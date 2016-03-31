@@ -20,15 +20,15 @@
 #define MbaffFrameFlag	\
 	(decoder->sps.mb_adaptive_frame_field_flag && !decoder->sh.field_pic_flag)
 
-static int is_end_of_NAL(decoder_context *decoder)
+static int is_end_of_NAL(bitstream_reader *reader, int NAL_start_delim)
 {
-	bitstream_reader *reader = &decoder->reader;
+	int no_more_data = (reader->data_offset >= reader->bitstream_end);
 
-	if (!decoder->NAL_start_delim) {
-		return (reader->data_offset >= reader->bitstream_end);
+	if (!NAL_start_delim) {
+		return no_more_data;
 	}
 
-	return is_NAL_start_code(reader);
+	return no_more_data || is_NAL_start_code(reader);
 }
 
 int more_rbsp_data(decoder_context *decoder)
@@ -44,15 +44,11 @@ int more_rbsp_data(decoder_context *decoder)
 
 	reader->rbsp_mode = 0;
 
-	if (is_end_of_NAL(decoder)) {
-		return 0;
-	}
-
 	if (bitstream_read_rbsp_align(reader) != 0) {
 		goto more_data;
 	}
 
-	while (!is_end_of_NAL(decoder)) {
+	while (!is_end_of_NAL(reader, decoder->NAL_start_delim)) {
 		if (bitstream_read_u(reader, 8) != 0) {
 			goto more_data;
 		}
