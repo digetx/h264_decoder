@@ -264,7 +264,7 @@ static uint32_t bitstream_read_bits(bitstream_reader *reader, uint8_t bits_nb,
 					!escape_inc_offset || inc_offset,
 					&escaped);
 
-		if (escaped && escape_inc_offset && !inc_offset) {
+		if (escaped) {
 			data_offset++;
 		}
 
