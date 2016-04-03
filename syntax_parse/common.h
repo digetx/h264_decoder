@@ -102,4 +102,6 @@ void residual(const decoder_context *decoder, macroblock *mb, unsigned mb_id,
 
 int more_rbsp_data(decoder_context *decoder);
 
+void SPS_vui_parameters(decoder_context *decoder);
+
 #endif // SYNTAX_COMMON_H

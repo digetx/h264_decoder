@@ -17,6 +17,7 @@ h264_decode_SOURCES =					\
 	syntax_parse/residual.c				\
 	syntax_parse/CAVLC.c				\
 	syntax_parse/MP4.c				\
+	syntax_parse/VUI.c				\
 	bitstream/bitstream.c				\
 	transforms/inv_scan.c				\
 	transforms/inv_scale_4x4.c			\

@@ -265,7 +265,7 @@ void parse_SPS(decoder_context *decoder)
 		      decoder->sps.vui_parameters_present_flag);
 
 	if (decoder->sps.vui_parameters_present_flag) {
-// 		SPS_vui_parameters();
+		SPS_vui_parameters(decoder);
 	}
 
 	decoder->sps.valid = 1;
