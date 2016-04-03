@@ -100,13 +100,11 @@ void parse_NAL(decoder_context *decoder)
 	SYNTAX_IPRINT("type %u = \"%s\"\n", decoder->nal.unit_type,
 		      NAL_TYPE(decoder->nal.unit_type));
 
-	if (forbidden_zero_bit != 0 || decoder->nal.unit_type > 31) {
+	if (forbidden_zero_bit != 0) {
 		SYNTAX_ERR("NAL is malformed\n");
 	}
 
 	switch (decoder->nal.unit_type) {
-	case 1:
-		break;
 	case 5:
 		parse_slice_header(decoder);
 		parse_slice_data(decoder);
