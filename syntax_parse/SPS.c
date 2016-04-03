@@ -268,5 +268,9 @@ void parse_SPS(decoder_context *decoder)
 		SPS_vui_parameters(decoder);
 	}
 
+	if (more_rbsp_data(decoder)) {
+		SYNTAX_ERR("SPS is malformed\n");
+	}
+
 	decoder->sps.valid = 1;
 }

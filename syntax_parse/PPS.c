@@ -203,8 +203,10 @@ void parse_PPS(decoder_context *decoder)
 	SYNTAX_IPRINT("second_chroma_qp_index_offset = %d\n",
 		      decoder->pps.second_chroma_qp_index_offset);
 
-end:
-	bitstream_read_rbsp_align(reader);
+	if (more_rbsp_data(decoder)) {
+		SYNTAX_ERR("PPS is malformed\n");
+	}
 
+end:
 	decoder->pps.valid = 1;
 }
