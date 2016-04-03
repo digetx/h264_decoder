@@ -22,7 +22,7 @@ void parse_PPS(decoder_context *decoder)
 	bitstream_reader *reader = &decoder->reader;
 	int i;
 
-	decoder->pps.valid = 0;
+	decoder_reset_PPS(decoder);
 
 	decoder->pps.pic_parameter_set_id = bitstream_read_ue(reader);
 	decoder->pps.seq_parameter_set_id = bitstream_read_ue(reader);

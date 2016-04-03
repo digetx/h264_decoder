@@ -104,4 +104,13 @@ int more_rbsp_data(decoder_context *decoder);
 
 void SPS_vui_parameters(decoder_context *decoder);
 
+void decoder_reset_SPS(decoder_context *decoder);
+
+void decoder_reset_PPS(decoder_context *decoder);
+
+void decoder_reset_SH(decoder_context *decoder);
+
+void decoder_reset_SD(decoder_context *decoder);
+
+
 #endif // SYNTAX_COMMON_H

@@ -86,6 +86,8 @@ void parse_slice_data(decoder_context *decoder)
 	unsigned prevMbSkipped = 0;
 	int i;
 
+	decoder_reset_SD(decoder);
+
 	if (CABAC_MODE) {
 		SYNTAX_ERR("CABAC unimplemented\n");
 	}

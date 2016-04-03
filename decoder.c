@@ -50,22 +50,42 @@ void decoder_set_notify(decoder_context *decoder,
 	decoder->opaque = opaque;
 }
 
-static void decoder_reset_context(decoder_context *decoder)
+void decoder_reset_SPS(decoder_context *decoder)
 {
 	free(decoder->sps.offset_for_ref_frame);
+	bzero(&decoder->sps, sizeof(decoder->sps));
+}
+
+void decoder_reset_PPS(decoder_context *decoder)
+{
 	free(decoder->pps.run_length_minus1);
 	free(decoder->pps.top_left);
 	free(decoder->pps.bottom_right);
 	free(decoder->pps.slice_group_id);
+	bzero(&decoder->pps, sizeof(decoder->pps));
+}
+
+void decoder_reset_SH(decoder_context *decoder)
+{
 	free(decoder->sh.pred_weight_l0);
 	free(decoder->sh.pred_weight_l1);
-	free(decoder->sd.macroblocks);
-
-	bzero(&decoder->sps, sizeof(decoder->sps));
-	bzero(&decoder->pps, sizeof(decoder->pps));
-	bzero(&decoder->nal, sizeof(decoder->nal));
 	bzero(&decoder->sh, sizeof(decoder->sh));
+}
+
+void decoder_reset_SD(decoder_context *decoder)
+{
+	free(decoder->sd.macroblocks);
 	bzero(&decoder->sd, sizeof(decoder->sd));
+}
+
+static void decoder_reset_context(decoder_context *decoder)
+{
+	decoder_reset_SPS(decoder);
+	decoder_reset_PPS(decoder);
+	decoder_reset_SH(decoder);
+	decoder_reset_SD(decoder);
+
+	bzero(&decoder->nal, sizeof(decoder->nal));
 }
 
 size_t decoder_image_frame_size(decoder_context *decoder)
@@ -329,6 +349,5 @@ void decode_current_slice(decoder_context *decoder, unsigned last_mb_id)
 		if (decoder->frame_decoded_notify != NULL) {
 			decoder->frame_decoded_notify(decoder);
 		}
-		decoder_reset_context(decoder);
 	}
 }

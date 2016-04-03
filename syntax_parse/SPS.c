@@ -48,7 +48,7 @@ void parse_SPS(decoder_context *decoder)
 	bitstream_reader *reader = &decoder->reader;
 	int i;
 
-	decoder->sps.valid = 0;
+	decoder_reset_SPS(decoder);
 
 	decoder->sps.profile_idc		= bitstream_read_u(reader, 8);
 	decoder->sps.constraint_set0_flag	= bitstream_read_u(reader, 1);

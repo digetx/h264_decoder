@@ -46,6 +46,16 @@ void parse_slice_header(decoder_context *decoder)
 	bitstream_reader *reader = &decoder->reader;
 	int i;
 
+	if (!decoder->sps.valid) {
+		SYNTAX_ERR("Cannot parse slice while SPS is invalid\n");
+	}
+
+	if (!decoder->pps.valid) {
+		SYNTAX_ERR("Cannot parse slice while PPS is invalid\n");
+	}
+
+	decoder_reset_SH(decoder);
+
 	decoder->sh.first_mb_in_slice = bitstream_read_ue(reader);
 	decoder->sh.slice_type = bitstream_read_ue(reader);
 	decoder->sh.pic_parameter_set_id = bitstream_read_ue(reader);
