@@ -50,19 +50,19 @@ void decoder_set_notify(decoder_context *decoder,
 	decoder->opaque = opaque;
 }
 
-void decoder_reset_SPS(decoder_context *decoder)
+void decoder_reset_SPS(decoder_context_sps *sps)
 {
-	free(decoder->sps.offset_for_ref_frame);
-	bzero(&decoder->sps, sizeof(decoder->sps));
+	free(sps->offset_for_ref_frame);
+	bzero(sps, sizeof(*sps));
 }
 
-void decoder_reset_PPS(decoder_context *decoder)
+void decoder_reset_PPS(decoder_context_pps *pps)
 {
-	free(decoder->pps.run_length_minus1);
-	free(decoder->pps.top_left);
-	free(decoder->pps.bottom_right);
-	free(decoder->pps.slice_group_id);
-	bzero(&decoder->pps, sizeof(decoder->pps));
+	free(pps->run_length_minus1);
+	free(pps->top_left);
+	free(pps->bottom_right);
+	free(pps->slice_group_id);
+	bzero(pps, sizeof(*pps));
 }
 
 void decoder_reset_SH(decoder_context *decoder)
@@ -80,8 +80,6 @@ void decoder_reset_SD(decoder_context *decoder)
 
 static void decoder_reset_context(decoder_context *decoder)
 {
-	decoder_reset_SPS(decoder);
-	decoder_reset_PPS(decoder);
 	decoder_reset_SH(decoder);
 	decoder_reset_SD(decoder);
 
@@ -90,8 +88,8 @@ static void decoder_reset_context(decoder_context *decoder)
 
 size_t decoder_image_frame_size(decoder_context *decoder)
 {
-	unsigned pic_width_in_mbs = decoder->sps.pic_width_in_mbs_minus1 + 1;
-	unsigned pic_height_in_mbs = decoder->sps.pic_height_in_map_units_minus1 + 1;
+	unsigned pic_width_in_mbs = decoder->active_sps->pic_width_in_mbs_minus1 + 1;
+	unsigned pic_height_in_mbs = decoder->active_sps->pic_height_in_map_units_minus1 + 1;
 	unsigned img_width = pic_width_in_mbs * 16;
 	unsigned img_height = pic_height_in_mbs * 16;
 	unsigned img_size = img_width * img_height;
@@ -104,8 +102,8 @@ void decoder_render_macroblock(decoder_context *decoder, unsigned mb_id)
 	unsigned mb_id_in_slice = mb_id - decoder->sh.first_mb_in_slice;
 	macroblock *mb = &decoder->sd.macroblocks[mb_id_in_slice];
 	uint8_t *decoded_image = decoder->decoded_image;
-	unsigned pic_width_in_mbs = decoder->sps.pic_width_in_mbs_minus1 + 1;
-	unsigned pic_height_in_mbs = decoder->sps.pic_height_in_map_units_minus1 + 1;
+	unsigned pic_width_in_mbs = decoder->active_sps->pic_width_in_mbs_minus1 + 1;
+	unsigned pic_height_in_mbs = decoder->active_sps->pic_height_in_map_units_minus1 + 1;
 	unsigned img_width = pic_width_in_mbs * 16;
 	unsigned img_height = pic_height_in_mbs * 16;
 	unsigned img_size = img_width * img_height;
@@ -184,8 +182,8 @@ static int decode_macroblock(decoder_context *decoder, unsigned mb_id, int QPY,
 		TransformBypassModeFlag = 1;
 	}
 
-	qPOffsetCb = decoder->pps.chroma_qp_index_offset;
-	qPOffsetCr = decoder->pps.second_chroma_qp_index_offset;
+	qPOffsetCb = decoder->active_pps->chroma_qp_index_offset;
+	qPOffsetCr = decoder->active_pps->second_chroma_qp_index_offset;
 
 	qPi = Clip3(-QpBdOffsetC, 51, QPY + qPOffsetCb);
 	QPcb = qPc(qPi) + qPOffsetCb;
@@ -318,15 +316,15 @@ static int decode_macroblock(decoder_context *decoder, unsigned mb_id, int QPY,
 
 void decode_current_slice(decoder_context *decoder, unsigned last_mb_id)
 {
-	int qpprime_y_zero_transform_bypass_flag = decoder->sps.qpprime_y_zero_transform_bypass_flag;
-	int QPY = decoder->pps.pic_init_qp_minus26 + 26 + decoder->sh.slice_qp_delta;
-	int QpBdOffsetC = 6 * decoder->sps.bit_depth_chroma_minus8;
-	int QpBdOffsetY = 6 * decoder->sps.bit_depth_luma_minus8;
+	int qpprime_y_zero_transform_bypass_flag = decoder->active_sps->qpprime_y_zero_transform_bypass_flag;
+	int QPY = decoder->active_pps->pic_init_qp_minus26 + 26 + decoder->sh.slice_qp_delta;
+	int QpBdOffsetC = 6 * decoder->active_sps->bit_depth_chroma_minus8;
+	int QpBdOffsetY = 6 * decoder->active_sps->bit_depth_luma_minus8;
 	unsigned CurrMbAddr = decoder->sh.first_mb_in_slice;
 	unsigned last_mb_in_frame;
 
-	last_mb_in_frame  = decoder->sps.pic_width_in_mbs_minus1 + 1;
-	last_mb_in_frame *= decoder->sps.pic_height_in_map_units_minus1 + 1;
+	last_mb_in_frame  = decoder->active_sps->pic_width_in_mbs_minus1 + 1;
+	last_mb_in_frame *= decoder->active_sps->pic_height_in_map_units_minus1 + 1;
 
 	DECODE_DPRINT("last_mb_in_frame %d\n", last_mb_in_frame);
 

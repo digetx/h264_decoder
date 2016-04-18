@@ -82,6 +82,7 @@ static unsigned residual_block(const decoder_context *decoder, macroblock *mb,
 			       signed nC, int16_t res_array[16])
 {
 	bitstream_reader *reader = (void *) &decoder->reader;
+	const decoder_context_pps *pps = decoder->active_pps;
 	unsigned totalcoeff;
 
 	if (!CABAC_MODE) {
@@ -168,6 +169,7 @@ void residual(const decoder_context *decoder, macroblock *mb, unsigned mb_id,
 	      int startIdx, int endIdx, unsigned CBPLuma, unsigned CBPChroma)
 {
 	bitstream_reader *reader = (void *) &decoder->reader;
+	const decoder_context_sps *sps = decoder->active_sps;
 	unsigned ChromaArrayType = ChromaArrayType();
 	signed nCA, nCB, nC;
 	int iCbCr, i4x4;

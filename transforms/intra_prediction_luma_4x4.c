@@ -37,7 +37,7 @@ void mb_apply_luma_prediction_4x4(const decoder_context *decoder,
 	unsigned mb_id_in_slice = mb_id - decoder->sh.first_mb_in_slice;
 	macroblock *mb = &decoder->sd.macroblocks[mb_id_in_slice];
 	macroblock *src_mb_left, *src_mb_up;
-	int bit_depth = decoder->sps.bit_depth_luma_minus8 + 8;
+	int bit_depth = decoder->active_sps->bit_depth_luma_minus8 + 8;
 	int sub_mb, sub_mb_id_left, sub_mb_id_up;
 	uint8_t tmp[9];
 	int pred;

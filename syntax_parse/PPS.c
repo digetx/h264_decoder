@@ -20,104 +20,127 @@
 void parse_PPS(decoder_context *decoder)
 {
 	bitstream_reader *reader = &decoder->reader;
+	decoder_context_sps *sps;
+	decoder_context_pps *pps;
+	uint32_t pps_id;
+	uint32_t sps_id;
 	int i;
 
-	decoder_reset_PPS(decoder);
+	pps_id = bitstream_read_ue(reader);
 
-	decoder->pps.pic_parameter_set_id = bitstream_read_ue(reader);
-	decoder->pps.seq_parameter_set_id = bitstream_read_ue(reader);
-	decoder->pps.entropy_coding_mode_flag = bitstream_read_u(reader, 1);
-	decoder->pps.bottom_field_pic_order_in_frame_present_flag = bitstream_read_u(reader, 1);
-	decoder->pps.num_slice_groups_minus1 = bitstream_read_ue(reader);
+	SYNTAX_IPRINT("pic_parameter_set_id = %u\n", pps_id);
 
-	SYNTAX_IPRINT("pic_parameter_set_id = %u\n",
-		      decoder->pps.pic_parameter_set_id);
-	SYNTAX_IPRINT("seq_parameter_set_id = %u\n",
-		      decoder->pps.seq_parameter_set_id);
+	if (pps_id > 255) {
+		SYNTAX_ERR("PPS is malformed, pps_id overflow\n");
+	}
+
+	pps = &decoder->pps[pps_id];
+
+	decoder_reset_PPS(pps);
+
+	sps_id = bitstream_read_ue(reader);
+
+	SYNTAX_IPRINT("seq_parameter_set_id = %u\n", sps_id);
+
+	if (sps_id > 31) {
+		SYNTAX_ERR("PPS is malformed, sps_id overflow\n");
+	}
+
+	sps = &decoder->sps[sps_id];
+
+	if (!sps->valid) {
+		SYNTAX_ERR("PPS is malformed, SPS is invalid\n");
+	}
+
+	pps->seq_parameter_set_id = sps_id;
+	pps->entropy_coding_mode_flag = bitstream_read_u(reader, 1);
+	pps->bottom_field_pic_order_in_frame_present_flag = bitstream_read_u(reader, 1);
+	pps->num_slice_groups_minus1 = bitstream_read_ue(reader);
+
 	SYNTAX_IPRINT("entropy_coding_mode_flag (CABAC) = %u\n",
-		      decoder->pps.entropy_coding_mode_flag);
+		      pps->entropy_coding_mode_flag);
 	SYNTAX_IPRINT("bottom_field_pic_order_in_frame_present_flag = %u\n",
-		      decoder->pps.bottom_field_pic_order_in_frame_present_flag);
+		      pps->bottom_field_pic_order_in_frame_present_flag);
 	SYNTAX_IPRINT("num_slice_groups_minus1 = %u\n",
-		      decoder->pps.num_slice_groups_minus1);
+		      pps->num_slice_groups_minus1);
 
-	if (decoder->pps.num_slice_groups_minus1 > 0) {
-		decoder->pps.slice_group_map_type = bitstream_read_ue(reader);
+	if (pps->num_slice_groups_minus1 > 0) {
+		pps->slice_group_map_type = bitstream_read_ue(reader);
 
 		SYNTAX_IPRINT("slice_group_map_type = %u\n",
-			      decoder->pps.slice_group_map_type);
+			      pps->slice_group_map_type);
 
-		switch (decoder->pps.slice_group_map_type) {
+		switch (pps->slice_group_map_type) {
 		case 0:
-			decoder->pps.run_length_minus1 =
-				realloc(decoder->pps.run_length_minus1,
-					decoder->pps.num_slice_groups_minus1 + 1);
+			pps->run_length_minus1 =
+				realloc(pps->run_length_minus1,
+					pps->num_slice_groups_minus1 + 1);
 
-			assert(decoder->pps.run_length_minus1 != NULL);
+			assert(pps->run_length_minus1 != NULL);
 
-			for (i = 0; i <= decoder->pps.num_slice_groups_minus1; i++) {
-				decoder->pps.run_length_minus1[i] =
+			for (i = 0; i <= pps->num_slice_groups_minus1; i++) {
+				pps->run_length_minus1[i] =
 							bitstream_read_ue(reader);
 
 				SYNTAX_IPRINT("run_length_minus1[%d] = %u\n",
-					      i, decoder->pps.run_length_minus1[i]);
+					      i, pps->run_length_minus1[i]);
 			}
 			break;
 		case 2:
-			decoder->pps.top_left =
-				realloc(decoder->pps.top_left,
-					decoder->pps.num_slice_groups_minus1 + 1);
+			pps->top_left =
+				realloc(pps->top_left,
+					pps->num_slice_groups_minus1 + 1);
 
-			assert(decoder->pps.top_left != NULL);
+			assert(pps->top_left != NULL);
 
-			decoder->pps.bottom_right =
-				realloc(decoder->pps.bottom_right,
-					decoder->pps.num_slice_groups_minus1 + 1);
+			pps->bottom_right =
+				realloc(pps->bottom_right,
+					pps->num_slice_groups_minus1 + 1);
 
-			assert(decoder->pps.bottom_right != NULL);
+			assert(pps->bottom_right != NULL);
 
-			for (i = 0; i < decoder->pps.num_slice_groups_minus1; i++) {
-				decoder->pps.top_left[i] = bitstream_read_ue(reader);
-				decoder->pps.bottom_right[i] = bitstream_read_ue(reader);
+			for (i = 0; i < pps->num_slice_groups_minus1; i++) {
+				pps->top_left[i] = bitstream_read_ue(reader);
+				pps->bottom_right[i] = bitstream_read_ue(reader);
 
 				SYNTAX_IPRINT("top_left[%d] = %u\n",
-					      i, decoder->pps.top_left[i]);
+					      i, pps->top_left[i]);
 				SYNTAX_IPRINT("bottom_right[%d] = %u\n",
-					      i, decoder->pps.bottom_right[i]);
+					      i, pps->bottom_right[i]);
 			}
 			break;
 		case 3 ... 5:
-			decoder->pps.slice_group_change_direction_flag =
+			pps->slice_group_change_direction_flag =
 						bitstream_read_u(reader, 1);
-			decoder->pps.slice_group_change_rate_minus1 =
+			pps->slice_group_change_rate_minus1 =
 						bitstream_read_ue(reader);
 
 			SYNTAX_IPRINT("slice_group_change_direction_flag = %u\n",
-				      decoder->pps.slice_group_change_direction_flag);
+				      pps->slice_group_change_direction_flag);
 			SYNTAX_IPRINT("slice_group_change_rate_minus1 = %u\n",
-				      decoder->pps.slice_group_change_rate_minus1);
+				      pps->slice_group_change_rate_minus1);
 			break;
 		case 6:
-			decoder->pps.pic_size_in_map_units_minus1 =
+			pps->pic_size_in_map_units_minus1 =
 						bitstream_read_ue(reader);
 
 			SYNTAX_IPRINT("pic_size_in_map_units_minus1 = %u\n",
-				      decoder->pps.pic_size_in_map_units_minus1);
+				      pps->pic_size_in_map_units_minus1);
 
-			decoder->pps.slice_group_id =
-				realloc(decoder->pps.slice_group_id,
-					decoder->pps.pic_size_in_map_units_minus1 + 1);
+			pps->slice_group_id =
+				realloc(pps->slice_group_id,
+					pps->pic_size_in_map_units_minus1 + 1);
 
-			assert(decoder->pps.slice_group_id != NULL);
+			assert(pps->slice_group_id != NULL);
 
-			for (i = 0; i <= decoder->pps.pic_size_in_map_units_minus1; i++) {
+			for (i = 0; i <= pps->pic_size_in_map_units_minus1; i++) {
 				int bits_nb =
-					32 - clz(decoder->pps.pic_size_in_map_units_minus1 + 1);
+					32 - clz(pps->pic_size_in_map_units_minus1 + 1);
 
-				decoder->pps.slice_group_id[i] = bitstream_read_u(reader, bits_nb);
+				pps->slice_group_id[i] = bitstream_read_u(reader, bits_nb);
 
 				SYNTAX_IPRINT("slice_group_id[%d] = %u\n",
-					      i, decoder->pps.slice_group_id[i]);
+					      i, pps->slice_group_id[i]);
 			}
 			break;
 		default:
@@ -125,58 +148,56 @@ void parse_PPS(decoder_context *decoder)
 		}
 	}
 
-	decoder->pps.num_ref_idx_l0_default_active_minus1   = bitstream_read_ue(reader);
-	decoder->pps.num_ref_idx_l1_default_active_minus1   = bitstream_read_ue(reader);
-	decoder->pps.weighted_pred_flag                     = bitstream_read_u(reader, 1);
-	decoder->pps.weighted_bipred_idc                    = bitstream_read_u(reader, 2);
-	decoder->pps.pic_init_qp_minus26                    = bitstream_read_se(reader);
-	decoder->pps.pic_init_qs_minus26                    = bitstream_read_se(reader);
-	decoder->pps.chroma_qp_index_offset                 = bitstream_read_se(reader);
-	decoder->pps.deblocking_filter_control_present_flag = bitstream_read_u(reader, 1);
-	decoder->pps.constrained_intra_pred_flag            = bitstream_read_u(reader, 1);
-	decoder->pps.redundant_pic_cnt_present_flag         = bitstream_read_u(reader, 1);
+	pps->num_ref_idx_l0_default_active_minus1   = bitstream_read_ue(reader);
+	pps->num_ref_idx_l1_default_active_minus1   = bitstream_read_ue(reader);
+	pps->weighted_pred_flag                     = bitstream_read_u(reader, 1);
+	pps->weighted_bipred_idc                    = bitstream_read_u(reader, 2);
+	pps->pic_init_qp_minus26                    = bitstream_read_se(reader);
+	pps->pic_init_qs_minus26                    = bitstream_read_se(reader);
+	pps->chroma_qp_index_offset                 = bitstream_read_se(reader);
+	pps->deblocking_filter_control_present_flag = bitstream_read_u(reader, 1);
+	pps->constrained_intra_pred_flag            = bitstream_read_u(reader, 1);
+	pps->redundant_pic_cnt_present_flag         = bitstream_read_u(reader, 1);
 
 	SYNTAX_IPRINT("num_ref_idx_l0_default_active_minus1 = %u\n",
-		      decoder->pps.num_ref_idx_l0_default_active_minus1);
+		      pps->num_ref_idx_l0_default_active_minus1);
 	SYNTAX_IPRINT("num_ref_idx_l1_default_active_minus1 = %u\n",
-		      decoder->pps.num_ref_idx_l1_default_active_minus1);
+		      pps->num_ref_idx_l1_default_active_minus1);
 	SYNTAX_IPRINT("weighted_pred_flag = %u\n",
-		      decoder->pps.weighted_pred_flag);
+		      pps->weighted_pred_flag);
 	SYNTAX_IPRINT("weighted_bipred_idc = %u\n",
-		      decoder->pps.weighted_bipred_idc);
+		      pps->weighted_bipred_idc);
 	SYNTAX_IPRINT("pic_init_qp_minus26 = %d\n",
-		      decoder->pps.pic_init_qp_minus26);
+		      pps->pic_init_qp_minus26);
 	SYNTAX_IPRINT("pic_init_qs_minus26 = %d\n",
-		      decoder->pps.pic_init_qs_minus26);
+		      pps->pic_init_qs_minus26);
 	SYNTAX_IPRINT("chroma_qp_index_offset = %d\n",
-		      decoder->pps.chroma_qp_index_offset);
+		      pps->chroma_qp_index_offset);
 	SYNTAX_IPRINT("deblocking_filter_control_present_flag = %u\n",
-		      decoder->pps.deblocking_filter_control_present_flag);
+		      pps->deblocking_filter_control_present_flag);
 	SYNTAX_IPRINT("constrained_intra_pred_flag = %u\n",
-		      decoder->pps.constrained_intra_pred_flag);
+		      pps->constrained_intra_pred_flag);
 	SYNTAX_IPRINT("redundant_pic_cnt_present_flag = %u\n",
-		      decoder->pps.redundant_pic_cnt_present_flag);
+		      pps->redundant_pic_cnt_present_flag);
 
 	if (!more_rbsp_data(decoder)) {
 		goto end;
 	}
 
-	decoder->pps.transform_8x8_mode_flag =
-					bitstream_read_u(reader, 1);
-	decoder->pps.pic_scaling_matrix_present_flag =
-					bitstream_read_u(reader, 1);
+	pps->transform_8x8_mode_flag	     = bitstream_read_u(reader, 1);
+	pps->pic_scaling_matrix_present_flag = bitstream_read_u(reader, 1);
 
 	SYNTAX_IPRINT("transform_8x8_mode_flag = %u\n",
-		      decoder->pps.transform_8x8_mode_flag);
+		      pps->transform_8x8_mode_flag);
 	SYNTAX_IPRINT("pic_scaling_matrix_present_flag = %u\n",
-		      decoder->pps.pic_scaling_matrix_present_flag);
+		      pps->pic_scaling_matrix_present_flag);
 
-	if (decoder->pps.transform_8x8_mode_flag) {
+	if (pps->transform_8x8_mode_flag) {
 		SYNTAX_ERR("transform_8x8 unsupported\n");
 	}
 
-	if (decoder->pps.pic_scaling_matrix_present_flag) {
-		for (i = 0; i < 6 + ( ( decoder->sps.chroma_format_idc != 3 ) ? 2 : 6 ) * decoder->pps.transform_8x8_mode_flag; i++) {
+	if (pps->pic_scaling_matrix_present_flag) {
+		for (i = 0; i < 6 + ( ( sps->chroma_format_idc != 3 ) ? 2 : 6 ) * pps->transform_8x8_mode_flag; i++) {
 			unsigned present_flag = bitstream_read_u(reader, 1);
 
 			SYNTAX_IPRINT("scaling list %s[%d]: %s",
@@ -188,25 +209,25 @@ void parse_PPS(decoder_context *decoder)
 			}
 
 			if (i < 6) {
-				scaling_list(reader, decoder->pps.scalingList_4x4[i], 4,
-					     &decoder->pps.UseDefaultScalingMatrix4x4Flag[i]);
+				scaling_list(reader, pps->scalingList_4x4[i], 4,
+					     &pps->UseDefaultScalingMatrix4x4Flag[i]);
 			} else {
-				scaling_list(reader, decoder->pps.scalingList_8x8[i - 6], 8,
-					     &decoder->pps.UseDefaultScalingMatrix8x8Flag[i - 6]);
+				scaling_list(reader, pps->scalingList_8x8[i - 6], 8,
+					     &pps->UseDefaultScalingMatrix8x8Flag[i - 6]);
 			}
 		}
 	}
 
-	decoder->pps.second_chroma_qp_index_offset =
+	pps->second_chroma_qp_index_offset =
 					bitstream_read_se(reader);
 
 	SYNTAX_IPRINT("second_chroma_qp_index_offset = %d\n",
-		      decoder->pps.second_chroma_qp_index_offset);
+		      pps->second_chroma_qp_index_offset);
 
 	if (more_rbsp_data(decoder)) {
 		SYNTAX_ERR("PPS is malformed\n");
 	}
 
 end:
-	decoder->pps.valid = 1;
+	pps->valid = 1;
 }

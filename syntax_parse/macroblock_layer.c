@@ -108,6 +108,8 @@ int MbPartPredMode(const macroblock *mb, int slice_type)
 void macroblock_layer(const decoder_context *decoder, unsigned mb_id)
 {
 	bitstream_reader *reader = (void *) &decoder->reader;
+	const decoder_context_sps *sps = decoder->active_sps;
+	const decoder_context_pps *pps = decoder->active_pps;
 	unsigned mb_id_in_slice = mb_id - decoder->sh.first_mb_in_slice;
 	macroblock *mb = &decoder->sd.macroblocks[mb_id_in_slice];
 	unsigned ChromaArrayType = ChromaArrayType();
@@ -136,7 +138,7 @@ void macroblock_layer(const decoder_context *decoder, unsigned mb_id)
 		break;
 	}
 
-	switch (decoder->sps.chroma_format_idc) {
+	switch (decoder->active_sps->chroma_format_idc) {
 	case YUV400:
 		MbWidthC  = 4;
 		MbHeightC = 4;
@@ -193,7 +195,7 @@ void macroblock_layer(const decoder_context *decoder, unsigned mb_id)
 	{
 		SYNTAX_ERR("MbPartPredMode unimplemented\n");
 	} else {
-		if (decoder->pps.transform_8x8_mode_flag &&
+		if (decoder->active_pps->transform_8x8_mode_flag &&
 			mb->mb_type == I_NxN)
 		{
 			mb->transform_size_8x8_flag = bitstream_read_u(reader, 1);
@@ -233,9 +235,9 @@ void macroblock_layer(const decoder_context *decoder, unsigned mb_id)
 // 		SYNTAX_IPRINT("CodedBlockPatternChroma = %u\n", CodedBlockPatternChroma);
 
 		if (CodedBlockPatternLuma > 0 &&
-			decoder->pps.transform_8x8_mode_flag && mb->mb_type != I_NxN &&
+			decoder->active_pps->transform_8x8_mode_flag && mb->mb_type != I_NxN &&
 			noSubMbPartSizeLessThan8x8Flag &&
-			(/*mb->mb_type != B_Direct_16x16 ||*/ decoder->sps.direct_8x8_inference_flag))
+			(/*mb->mb_type != B_Direct_16x16 ||*/ decoder->active_sps->direct_8x8_inference_flag))
 		{
 			mb->transform_size_8x8_flag = bitstream_read_u(reader, 1);
 

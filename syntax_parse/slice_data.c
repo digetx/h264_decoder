@@ -18,7 +18,7 @@
 #include "common.h"
 
 #define MbaffFrameFlag	\
-	(decoder->sps.mb_adaptive_frame_field_flag && !decoder->sh.field_pic_flag)
+	(decoder->active_sps->mb_adaptive_frame_field_flag && !decoder->sh.field_pic_flag)
 
 static int is_end_of_NAL(bitstream_reader *reader, int NAL_start_delim)
 {
@@ -68,7 +68,7 @@ static unsigned NextMbAddress(decoder_context *decoder, unsigned n)
 {
 	unsigned i = n + 1;
 
-	if (decoder->pps.num_slice_groups_minus1 != 0) {
+	if (decoder->active_pps->num_slice_groups_minus1 != 0) {
 		SYNTAX_ERR("Slice grouping unimplemented\n");
 	}
 
@@ -80,6 +80,7 @@ void rescale_levels(decoder_context *decoder, unsigned mb_id);
 void parse_slice_data(decoder_context *decoder)
 {
 	bitstream_reader *reader = &decoder->reader;
+	decoder_context_pps *pps = decoder->active_pps;
 	unsigned CurrMbAddr = decoder->sh.first_mb_in_slice * (1 + MbaffFrameFlag);
 	unsigned mb_alloc_nb = 1;
 	unsigned moreDataFlag = 1;

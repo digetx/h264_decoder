@@ -60,7 +60,7 @@ void mb_apply_chroma_prediction(const decoder_context *decoder, int plane_id,
 	unsigned mb_id_in_slice = mb_id - decoder->sh.first_mb_in_slice;
 	macroblock *mb = &decoder->sd.macroblocks[mb_id_in_slice];
 	macroblock *src_mb_left, *src_mb_up;
-	int bit_depth = decoder->sps.bit_depth_chroma_minus8 + 8;
+	int bit_depth = decoder->active_sps->bit_depth_chroma_minus8 + 8;
 	uint8_t *chroma_decoded;
 	int sub_mb, sub_mb_id_left, sub_mb_id_up;
 	int H, V, a, b, c, M;

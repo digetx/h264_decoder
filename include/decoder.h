@@ -45,7 +45,6 @@ typedef struct decoder_context_sps {
 	unsigned constraint_set4_flag:1;
 	unsigned constraint_set5_flag:1;
 	unsigned level_idc:8;
-	uint32_t seq_parameter_set_id;
 	uint32_t chroma_format_idc;
 	unsigned separate_colour_plane_flag:1;
 	uint32_t bit_depth_luma_minus8;
@@ -83,8 +82,7 @@ typedef struct decoder_context_sps {
 typedef struct decoder_context_pps {
 	unsigned valid:1;
 
-	uint32_t pic_parameter_set_id;
-	uint32_t seq_parameter_set_id;
+	uint8_t seq_parameter_set_id;
 	unsigned entropy_coding_mode_flag:1;
 	unsigned bottom_field_pic_order_in_frame_present_flag:1;
 	uint32_t num_slice_groups_minus1;
@@ -127,7 +125,6 @@ typedef struct pred_weight {
 typedef struct slice_header {
 	uint32_t first_mb_in_slice;
 	uint32_t slice_type;
-	uint32_t pic_parameter_set_id;
 	unsigned colour_plane_id:2;
 	uint32_t frame_num;
 	unsigned field_pic_flag:1;
@@ -204,8 +201,11 @@ typedef struct decoder_context {
 
 	uint8_t *decoded_image;
 
-	decoder_context_sps sps;
-	decoder_context_pps pps;
+	decoder_context_sps sps[32];
+	decoder_context_pps pps[256];
+
+	decoder_context_sps *active_sps;
+	decoder_context_pps *active_pps;
 
 	nal_header   nal;
 	slice_header sh;

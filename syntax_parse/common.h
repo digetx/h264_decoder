@@ -57,9 +57,10 @@
 #define ARRAY_SIZE(x)	(sizeof(x) / sizeof(*(x)))
 
 #define ChromaArrayType()	\
-	(decoder->sps.separate_colour_plane_flag ? 0 : decoder->sps.chroma_format_idc)
+	(sps->separate_colour_plane_flag ? 0 : sps->chroma_format_idc)
 
-#define CABAC_MODE	decoder->pps.entropy_coding_mode_flag
+
+#define CABAC_MODE	pps->entropy_coding_mode_flag
 
 #ifndef clz
 #define clz	__builtin_clz
@@ -104,9 +105,9 @@ int more_rbsp_data(decoder_context *decoder);
 
 void SPS_vui_parameters(decoder_context *decoder);
 
-void decoder_reset_SPS(decoder_context *decoder);
+void decoder_reset_SPS(decoder_context_sps *sps);
 
-void decoder_reset_PPS(decoder_context *decoder);
+void decoder_reset_PPS(decoder_context_pps *pps);
 
 void decoder_reset_SH(decoder_context *decoder);
 

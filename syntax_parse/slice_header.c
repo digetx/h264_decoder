@@ -44,40 +44,49 @@ static const char * SLICE_TYPE(int type)
 void parse_slice_header(decoder_context *decoder)
 {
 	bitstream_reader *reader = &decoder->reader;
+	decoder_context_sps *sps;
+	decoder_context_pps *pps;
+	unsigned pps_id;
 	int i;
-
-	if (!decoder->sps.valid) {
-		SYNTAX_ERR("Cannot parse slice while SPS is invalid\n");
-	}
-
-	if (!decoder->pps.valid) {
-		SYNTAX_ERR("Cannot parse slice while PPS is invalid\n");
-	}
 
 	decoder_reset_SH(decoder);
 
 	decoder->sh.first_mb_in_slice = bitstream_read_ue(reader);
 	decoder->sh.slice_type = bitstream_read_ue(reader);
-	decoder->sh.pic_parameter_set_id = bitstream_read_ue(reader);
+	pps_id = bitstream_read_ue(reader);
 
 	SYNTAX_IPRINT("first_mb_in_slice = %u\n", decoder->sh.first_mb_in_slice);
 	SYNTAX_IPRINT("slice_type %u = \"%s\"\n", decoder->sh.slice_type, SLICE_TYPE(decoder->sh.slice_type));
-	SYNTAX_IPRINT("pic_parameter_set_id = %u\n", decoder->sh.pic_parameter_set_id);
+	SYNTAX_IPRINT("pic_parameter_set_id = %u\n", pps_id);
+
+	if (pps_id > 255) {
+		SYNTAX_ERR("Slice header is malformed, pps_id overflow\n");
+	}
+
+	if (!decoder->pps[pps_id].valid) {
+		SYNTAX_ERR("Cannot parse slice while PPS is invalid\n");
+	}
+
+	decoder->active_pps = &decoder->pps[pps_id];
+	pps = decoder->active_pps;
+
+	decoder->active_sps = &decoder->sps[pps->seq_parameter_set_id];
+	sps = decoder->active_sps;
 
 	decoder->sh.slice_type %= 5;
 
-	if (decoder->sps.separate_colour_plane_flag) {
+	if (sps->separate_colour_plane_flag) {
 		decoder->sh.colour_plane_id = bitstream_read_u(reader, 2);
 
 		SYNTAX_IPRINT("colour_plane_id = %u\n", decoder->sh.colour_plane_id);
 	}
 
 	decoder->sh.frame_num =
-		bitstream_read_u(reader, decoder->sps.log2_max_frame_num_minus4 + 4);
+		bitstream_read_u(reader, sps->log2_max_frame_num_minus4 + 4);
 
 	SYNTAX_IPRINT("frame_num = %u\n", decoder->sh.frame_num);
 
-	if (!decoder->sps.frame_mbs_only_flag) {
+	if (!sps->frame_mbs_only_flag) {
 		decoder->sh.field_pic_flag = bitstream_read_u(reader, 1);
 
 		SYNTAX_IPRINT("field_pic_flag = %u\n", decoder->sh.field_pic_flag);
@@ -96,14 +105,14 @@ void parse_slice_header(decoder_context *decoder)
 		SYNTAX_IPRINT("idr_pic_id = %u\n", decoder->sh.idr_pic_id);
 	}
 
-	if (decoder->sps.pic_order_cnt_type == 0) {
+	if (sps->pic_order_cnt_type == 0) {
 		decoder->sh.pic_order_cnt_lsb =
-			bitstream_read_u(reader, decoder->sps.log2_max_pic_order_cnt_lsb_minus4 + 4 );
+			bitstream_read_u(reader, sps->log2_max_pic_order_cnt_lsb_minus4 + 4 );
 
 		SYNTAX_IPRINT("pic_order_cnt_lsb = %u\n",
 			      decoder->sh.pic_order_cnt_lsb);
 
-		if (decoder->pps.bottom_field_pic_order_in_frame_present_flag &&
+		if (pps->bottom_field_pic_order_in_frame_present_flag &&
 			!decoder->sh.field_pic_flag)
 		{
 			decoder->sh.delta_pic_order_cnt_bottom = bitstream_read_se(reader);
@@ -113,15 +122,15 @@ void parse_slice_header(decoder_context *decoder)
 		}
 	}
 
-	if (decoder->sps.pic_order_cnt_type == 1 &&
-		!decoder->sps.delta_pic_order_always_zero_flag)
+	if (sps->pic_order_cnt_type == 1 &&
+		!sps->delta_pic_order_always_zero_flag)
 	{
 		decoder->sh.delta_pic_order_cnt[0] = bitstream_read_se(reader);
 
 		SYNTAX_IPRINT("delta_pic_order_cnt[0] = %d\n",
 			      decoder->sh.delta_pic_order_cnt[0]);
 
-		if (decoder->pps.bottom_field_pic_order_in_frame_present_flag &&
+		if (pps->bottom_field_pic_order_in_frame_present_flag &&
 			!decoder->sh.field_pic_flag)
 		{
 			decoder->sh.delta_pic_order_cnt[1] = bitstream_read_se(reader);
@@ -131,7 +140,7 @@ void parse_slice_header(decoder_context *decoder)
 		}
 	}
 
-	if (decoder->pps.redundant_pic_cnt_present_flag) {
+	if (pps->redundant_pic_cnt_present_flag) {
 		decoder->sh.redundant_pic_cnt = bitstream_read_ue(reader);
 
 		SYNTAX_IPRINT("redundant_pic_cnt = %u\n",
@@ -254,12 +263,12 @@ pics_num:
 	switch (decoder->sh.slice_type) {
 	case P_ONLY:
 	case SP_ONLY:
-		if (!decoder->pps.weighted_pred_flag) {
+		if (!pps->weighted_pred_flag) {
 			break;
 		}
 		goto pred_weight_table;
 	case B:
-		if (!decoder->pps.weighted_bipred_idc) {
+		if (!pps->weighted_bipred_idc) {
 			break;
 		}
 pred_weight_table:
@@ -422,7 +431,7 @@ long_term_frame_idx__:			case 6:
 		break;
 	}
 
-	if (decoder->pps.deblocking_filter_control_present_flag) {
+	if (pps->deblocking_filter_control_present_flag) {
 		decoder->sh.disable_deblocking_filter_idc = bitstream_read_ue(reader);
 
 		SYNTAX_IPRINT("disable_deblocking_filter_idc = %u\n",
@@ -441,10 +450,10 @@ long_term_frame_idx__:			case 6:
 		}
 	}
 
-	if (decoder->pps.num_slice_groups_minus1 > 0 &&
-		decoder->pps.slice_group_map_type >= 3 && decoder->pps.slice_group_map_type <= 5)
+	if (pps->num_slice_groups_minus1 > 0 &&
+		pps->slice_group_map_type >= 3 && pps->slice_group_map_type <= 5)
 	{
-		int bits_nb = 32 - clz(decoder->pps.num_slice_groups_minus1 + 1);
+		int bits_nb = 32 - clz(pps->num_slice_groups_minus1 + 1);
 
 		decoder->sh.slice_group_change_cycle =
 						bitstream_read_u(reader, bits_nb);

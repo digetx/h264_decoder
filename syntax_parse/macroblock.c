@@ -43,8 +43,9 @@ const int mb_scan_map(int id)
 
 signed get_mb_id_left(const decoder_context *decoder, unsigned mb_id)
 {
+	const decoder_context_sps *sps = decoder->active_sps;
 	unsigned first_mb_in_slice = decoder->sh.first_mb_in_slice;
-	unsigned width = decoder->sps.pic_width_in_mbs_minus1 + 1;
+	unsigned width = sps->pic_width_in_mbs_minus1 + 1;
 	signed left_id = mb_id - 1;
 
 	if (mb_id % width == 0) {
@@ -60,8 +61,9 @@ signed get_mb_id_left(const decoder_context *decoder, unsigned mb_id)
 
 signed get_mb_id_up(const decoder_context *decoder, unsigned mb_id)
 {
+	const decoder_context_sps *sps = decoder->active_sps;
 	unsigned first_mb_in_slice = decoder->sh.first_mb_in_slice;
-	unsigned width = decoder->sps.pic_width_in_mbs_minus1 + 1;
+	unsigned width = sps->pic_width_in_mbs_minus1 + 1;
 	signed up_id = mb_id - width;
 
 	if (up_id < 0) {
@@ -77,8 +79,9 @@ signed get_mb_id_up(const decoder_context *decoder, unsigned mb_id)
 
 static signed get_mb_id_up_right(const decoder_context *decoder, unsigned mb_id)
 {
+	const decoder_context_sps *sps = decoder->active_sps;
 	unsigned first_mb_in_slice = decoder->sh.first_mb_in_slice;
-	unsigned width = decoder->sps.pic_width_in_mbs_minus1 + 1;
+	unsigned width = sps->pic_width_in_mbs_minus1 + 1;
 	signed up_right_id = mb_id - width + 1;
 
 	if (up_right_id % width == 0) {
@@ -98,8 +101,9 @@ static signed get_mb_id_up_right(const decoder_context *decoder, unsigned mb_id)
 
 static signed get_mb_id_left_up(const decoder_context *decoder, unsigned mb_id)
 {
+	const decoder_context_sps *sps = decoder->active_sps;
 	unsigned first_mb_in_slice = decoder->sh.first_mb_in_slice;
-	unsigned width = decoder->sps.pic_width_in_mbs_minus1 + 1;
+	unsigned width = sps->pic_width_in_mbs_minus1 + 1;
 	signed left_upt_id = mb_id - width - 1;
 
 	if (left_upt_id < 0) {
