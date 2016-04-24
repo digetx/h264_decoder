@@ -86,8 +86,7 @@ void mb_apply_luma_prediction_16x16(const decoder_context *decoder,
 				    unsigned mb_id, int Intra16x16PredMode,
 				    int16_t residual[16][16])
 {
-	unsigned mb_id_in_slice = mb_id - decoder->sh.first_mb_in_slice;
-	macroblock *mb = &decoder->sd.macroblocks[mb_id_in_slice];
+	macroblock *mb = &decoder->frames[0]->macroblocks[mb_id];
 	macroblock *src_mb_left, *src_mb_up;
 	int bit_depth = decoder->active_sps->bit_depth_luma_minus8 + 8;
 	int sub_mb, sub_mb_id_left, sub_mb_id_up;

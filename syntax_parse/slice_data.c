@@ -85,6 +85,8 @@ void parse_slice_data(decoder_context *decoder)
 	unsigned mb_alloc_nb = 1;
 	unsigned moreDataFlag = 1;
 	unsigned prevMbSkipped = 0;
+	unsigned pic_width_in_mbs;
+	unsigned pic_height_in_mbs;
 	int i;
 
 	decoder_reset_SD(decoder);
@@ -93,12 +95,19 @@ void parse_slice_data(decoder_context *decoder)
 		SYNTAX_ERR("CABAC unimplemented\n");
 	}
 
+	decoder->get_mb_slice_constraint = 1;
+
+	pic_width_in_mbs = decoder->active_sps->pic_width_in_mbs_minus1 + 1;
+	pic_height_in_mbs = decoder->active_sps->pic_height_in_map_units_minus1 + 1;
+
+	decoder->frames[0]->macroblocks = realloc(decoder->frames[0]->macroblocks,
+		sizeof(macroblock) * pic_width_in_mbs * pic_height_in_mbs);
+	assert(decoder->frames[0]->macroblocks != NULL);
+
+	decoder->sd.macroblocks = &decoder->frames[0]->macroblocks[CurrMbAddr];
+
 	do {
 		SYNTAX_IPRINT("---- parsing MacroBlock id = %u ----\n", CurrMbAddr);
-
-		decoder->sd.macroblocks = realloc(decoder->sd.macroblocks,
-					sizeof(macroblock) * mb_alloc_nb++);
-		assert(decoder->sd.macroblocks != NULL);
 
 		switch (decoder->sh.slice_type) {
 		default:

@@ -52,11 +52,11 @@ signed get_mb_id_left(const decoder_context *decoder, unsigned mb_id)
 		return MB_UNAVAILABLE;
 	}
 
-	if (left_id < first_mb_in_slice) {
+	if (decoder->get_mb_slice_constraint && left_id < first_mb_in_slice) {
 		return MB_UNAVAILABLE;
 	}
 
-	return left_id - first_mb_in_slice;
+	return left_id;
 }
 
 signed get_mb_id_up(const decoder_context *decoder, unsigned mb_id)
@@ -70,11 +70,11 @@ signed get_mb_id_up(const decoder_context *decoder, unsigned mb_id)
 		return MB_UNAVAILABLE;
 	}
 
-	if (up_id < first_mb_in_slice) {
+	if (decoder->get_mb_slice_constraint && up_id < first_mb_in_slice) {
 		return MB_UNAVAILABLE;
 	}
 
-	return up_id - first_mb_in_slice;
+	return up_id;
 }
 
 static signed get_mb_id_up_right(const decoder_context *decoder, unsigned mb_id)
@@ -92,11 +92,12 @@ static signed get_mb_id_up_right(const decoder_context *decoder, unsigned mb_id)
 		return MB_UNAVAILABLE;
 	}
 
-	if (up_right_id < first_mb_in_slice) {
+	if (decoder->get_mb_slice_constraint &&
+			up_right_id < first_mb_in_slice) {
 		return MB_UNAVAILABLE;
 	}
 
-	return up_right_id - first_mb_in_slice;
+	return up_right_id;
 }
 
 static signed get_mb_id_left_up(const decoder_context *decoder, unsigned mb_id)
@@ -110,11 +111,12 @@ static signed get_mb_id_left_up(const decoder_context *decoder, unsigned mb_id)
 		return MB_UNAVAILABLE;
 	}
 
-	if (left_upt_id < first_mb_in_slice) {
+	if (decoder->get_mb_slice_constraint &&
+			left_upt_id < first_mb_in_slice) {
 		return MB_UNAVAILABLE;
 	}
 
-	return left_upt_id - first_mb_in_slice;
+	return left_upt_id;
 }
 
 static unsigned get_sub_mb_id_left_4x4(unsigned sub_mb_id)
@@ -301,7 +303,7 @@ signed get_sub_id_4x4_left(const decoder_context *decoder, macroblock **mb,
 			return MB_UNAVAILABLE;
 		}
 
-		*mb = &decoder->sd.macroblocks[left_mb_id];
+		*mb = &decoder->frames[0]->macroblocks[left_mb_id];
 	default:
 		sub_mb_id = get_sub_mb_id_left_4x4(sub_mb_id);
 		break;
@@ -326,7 +328,7 @@ signed get_sub_id_4x4_up(const decoder_context *decoder, macroblock **mb,
 			return MB_UNAVAILABLE;
 		}
 
-		*mb = &decoder->sd.macroblocks[up_mb_id];
+		*mb = &decoder->frames[0]->macroblocks[up_mb_id];
 	default:
 		sub_mb_id = get_sub_mb_id_up_4x4(sub_mb_id);
 		break;
@@ -351,7 +353,7 @@ signed get_sub_id_4x4_up_right(const decoder_context *decoder, macroblock **mb,
 			return MB_UNAVAILABLE;
 		}
 
-		*mb = &decoder->sd.macroblocks[up_right_mb_id];
+		*mb = &decoder->frames[0]->macroblocks[up_right_mb_id];
 
 		return sub_mb_id_up_right;
 	case 5:
@@ -361,7 +363,7 @@ signed get_sub_id_4x4_up_right(const decoder_context *decoder, macroblock **mb,
 			return MB_UNAVAILABLE;
 		}
 
-		*mb = &decoder->sd.macroblocks[up_right_mb_id];
+		*mb = &decoder->frames[0]->macroblocks[up_right_mb_id];
 
 		return sub_mb_id_up_right;
 	case 7:
@@ -392,7 +394,7 @@ signed get_sub_id_4x4_left_up(const decoder_context *decoder, macroblock **mb,
 			return MB_UNAVAILABLE;
 		}
 
-		*mb = &decoder->sd.macroblocks[left_up_mb_id];
+		*mb = &decoder->frames[0]->macroblocks[left_up_mb_id];
 		break;
 	case 1:
 	case 4:
@@ -403,7 +405,7 @@ signed get_sub_id_4x4_left_up(const decoder_context *decoder, macroblock **mb,
 			return MB_UNAVAILABLE;
 		}
 
-		*mb = &decoder->sd.macroblocks[left_up_mb_id];
+		*mb = &decoder->frames[0]->macroblocks[left_up_mb_id];
 		break;
 	case 2:
 	case 8:
@@ -414,7 +416,7 @@ signed get_sub_id_4x4_left_up(const decoder_context *decoder, macroblock **mb,
 			return MB_UNAVAILABLE;
 		}
 
-		*mb = &decoder->sd.macroblocks[left_up_mb_id];
+		*mb = &decoder->frames[0]->macroblocks[left_up_mb_id];
 		break;
 	default:
 		break;
@@ -437,7 +439,7 @@ signed get_sub_id_8x8_left(const decoder_context *decoder, macroblock **mb,
 			return MB_UNAVAILABLE;
 		}
 
-		*mb = &decoder->sd.macroblocks[left_mb_id];
+		*mb = &decoder->frames[0]->macroblocks[left_mb_id];
 	default:
 		sub_mb_id = get_sub_mb_id_left_8x8(sub_mb_id);
 		break;
@@ -460,7 +462,7 @@ signed get_sub_id_8x8_up(const decoder_context *decoder, macroblock **mb,
 			return MB_UNAVAILABLE;
 		}
 
-		*mb = &decoder->sd.macroblocks[up_mb_id];
+		*mb = &decoder->frames[0]->macroblocks[up_mb_id];
 	default:
 		sub_mb_id = get_sub_mb_id_up_8x8(sub_mb_id);
 		break;
@@ -483,7 +485,7 @@ signed get_sub_id_8x8_up_right(const decoder_context *decoder, macroblock **mb,
 			return MB_UNAVAILABLE;
 		}
 
-		*mb = &decoder->sd.macroblocks[up_right_mb_id];
+		*mb = &decoder->frames[0]->macroblocks[up_right_mb_id];
 
 		return sub_mb_id_up_right;
 	case 1:
@@ -493,7 +495,7 @@ signed get_sub_id_8x8_up_right(const decoder_context *decoder, macroblock **mb,
 			return MB_UNAVAILABLE;
 		}
 
-		*mb = &decoder->sd.macroblocks[up_right_mb_id];
+		*mb = &decoder->frames[0]->macroblocks[up_right_mb_id];
 
 		return sub_mb_id_up_right;
 	case 3:
@@ -522,7 +524,7 @@ signed get_sub_id_8x8_left_up(const decoder_context *decoder, macroblock **mb,
 			return MB_UNAVAILABLE;
 		}
 
-		*mb = &decoder->sd.macroblocks[left_up_mb_id];
+		*mb = &decoder->frames[0]->macroblocks[left_up_mb_id];
 		break;
 	case 1:
 		left_up_mb_id = get_mb_id_up(decoder, mb_id);
@@ -531,7 +533,7 @@ signed get_sub_id_8x8_left_up(const decoder_context *decoder, macroblock **mb,
 			return MB_UNAVAILABLE;
 		}
 
-		*mb = &decoder->sd.macroblocks[left_up_mb_id];
+		*mb = &decoder->frames[0]->macroblocks[left_up_mb_id];
 		break;
 	case 2:
 		left_up_mb_id = get_mb_id_left(decoder, mb_id);
@@ -540,7 +542,7 @@ signed get_sub_id_8x8_left_up(const decoder_context *decoder, macroblock **mb,
 			return MB_UNAVAILABLE;
 		}
 
-		*mb = &decoder->sd.macroblocks[left_up_mb_id];
+		*mb = &decoder->frames[0]->macroblocks[left_up_mb_id];
 		break;
 	default:
 		break;

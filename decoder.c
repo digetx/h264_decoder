@@ -24,22 +24,20 @@
 #include "syntax_parse.h"
 #include "transforms/common.h"
 
-#define DECODE_DPRINT(f, ...)	printf(f, ## __VA_ARGS__)
-
-#define DECODE_ERR(f, ...)				\
-{							\
-	fprintf(stderr, "%s:%d:\n", __FILE__, __LINE__);\
-	fprintf(stderr, "error! decode: %s: "	\
-		f, __func__, ## __VA_ARGS__);		\
-	exit(EXIT_FAILURE);				\
-}
+#define ARRAY_SIZE(x)	(sizeof(x) / sizeof(*(x)))
 
 void decoder_init(decoder_context *decoder, void *data, uint32_t size)
 {
+	int i;
+
 	bzero(decoder, sizeof(*decoder));
 
 	bitstream_reader_selftest();
 	bitstream_init(&decoder->reader, data, size);
+
+	for (i = 0; i < ARRAY_SIZE(decoder->frames); i++) {
+		decoder->frames[i] = malloc(sizeof(frame_data));
+	}
 }
 
 void decoder_set_notify(decoder_context *decoder,
@@ -74,7 +72,6 @@ void decoder_reset_SH(decoder_context *decoder)
 
 void decoder_reset_SD(decoder_context *decoder)
 {
-	free(decoder->sd.macroblocks);
 	bzero(&decoder->sd, sizeof(decoder->sd));
 }
 
@@ -99,8 +96,7 @@ size_t decoder_image_frame_size(decoder_context *decoder)
 
 void decoder_render_macroblock(decoder_context *decoder, unsigned mb_id)
 {
-	unsigned mb_id_in_slice = mb_id - decoder->sh.first_mb_in_slice;
-	macroblock *mb = &decoder->sd.macroblocks[mb_id_in_slice];
+	macroblock *mb = &decoder->frames[0]->macroblocks[mb_id];
 	uint8_t *decoded_image = decoder->decoded_image;
 	unsigned pic_width_in_mbs = decoder->active_sps->pic_width_in_mbs_minus1 + 1;
 	unsigned pic_height_in_mbs = decoder->active_sps->pic_height_in_map_units_minus1 + 1;
@@ -160,11 +156,10 @@ static int decode_macroblock(decoder_context *decoder, unsigned mb_id, int QPY,
 			     int QpBdOffsetC, int QpBdOffsetY,
 			     int qpprime_y_zero_transform_bypass_flag)
 {
-	unsigned mb_id_in_slice = mb_id - decoder->sh.first_mb_in_slice;
-	macroblock *mb = &decoder->sd.macroblocks[mb_id_in_slice];
+	macroblock *mb = &decoder->frames[0]->macroblocks[mb_id];
 	int partPredMode = MbPartPredMode(mb, decoder->sh.slice_type);
 	unsigned chroma_pred_mode = mb->intra_chroma_pred_mode;
-	int32_t QP_Y, QPcb, QPcr, qPOffsetCb, qPOffsetCr, qPi;
+	int QP_Y, QPcb, QPcr, qPOffsetCb, qPOffsetCr, qPi;
 	int TransformBypassModeFlag = 0;
 	int16_t residual[16][16];
 	int16_t residual_DC[16];
@@ -191,6 +186,10 @@ static int decode_macroblock(decoder_context *decoder, unsigned mb_id, int QPY,
 	qPi = Clip3(-QpBdOffsetC, 51, QPY + qPOffsetCr);
 	QPcr = qPc(qPi) + qPOffsetCr;
 
+	mb->QP_Y = QP_Y;
+	mb->QPcb = QPcb;
+	mb->QPcr = QPcr;
+
 	if (partPredMode == Intra_16x16) {
 		if (mb->luma_DC.totalcoeff) {
 			TRANSFORM_DPRINT("decoding luma DC:\n");
@@ -212,6 +211,8 @@ static int decode_macroblock(decoder_context *decoder, unsigned mb_id, int QPY,
 		} else {
 			bzero(residual_DC, sizeof(residual_DC));
 		}
+
+
 	}
 
 	for (sub_mb_id = 0; sub_mb_id < 16; sub_mb_id++) {
@@ -219,13 +220,17 @@ static int decode_macroblock(decoder_context *decoder, unsigned mb_id, int QPY,
 			bzero(residual[sub_mb_id], sizeof(residual[sub_mb_id]));
 
 			if (partPredMode != Intra_16x16) {
+				mb->luma_has_transform_coeffs[sub_mb_id] = 0;
 				continue;
 			}
 
 			if (residual_DC[mb_scan_map(sub_mb_id)] == 0) {
+				mb->luma_has_transform_coeffs[sub_mb_id] = 0;
 				continue;
 			}
 		}
+
+		mb->luma_has_transform_coeffs[sub_mb_id] = 1;
 
 		DECODE_DPRINT("decoding luma AC[%d]:\n", sub_mb_id);
 
@@ -335,22 +340,30 @@ void decode_current_slice(decoder_context *decoder, unsigned last_mb_id)
 
 	DECODE_DPRINT("last_mb_in_frame %d\n", last_mb_in_frame);
 
-	if (CurrMbAddr == 0) {
-		size_t img_sz = decoder_image_frame_size(decoder);
-
-		decoder->decoded_image = realloc(decoder->decoded_image, img_sz);
-		assert(decoder->decoded_image != NULL);
-	}
-
 	for (; CurrMbAddr < last_mb_id; CurrMbAddr++) {
 		QPY = decode_macroblock(decoder, CurrMbAddr, QPY,
 					QpBdOffsetC, QpBdOffsetY,
 					qpprime_y_zero_transform_bypass_flag);
+	}
 
-		decoder_render_macroblock(decoder, CurrMbAddr);
+	if (decoder->sh.disable_deblocking_filter_idc != 1) {
+		CurrMbAddr = decoder->sh.first_mb_in_slice;
+
+		for (; CurrMbAddr < last_mb_id; CurrMbAddr++) {
+			mb_apply_deblocking(decoder, CurrMbAddr);
+		}
 	}
 
 	if (CurrMbAddr == last_mb_in_frame) {
+		size_t img_sz = decoder_image_frame_size(decoder);
+
+		decoder->decoded_image = realloc(decoder->decoded_image, img_sz);
+		assert(decoder->decoded_image != NULL);
+
+		for (CurrMbAddr = 0; CurrMbAddr < last_mb_in_frame; CurrMbAddr++) {
+			decoder_render_macroblock(decoder, CurrMbAddr);
+		}
+
 		if (decoder->frame_decoded_notify != NULL) {
 			decoder->frame_decoded_notify(decoder);
 		}

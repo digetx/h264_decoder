@@ -34,6 +34,16 @@
 #define SP_ONLY	8
 #define SI_ONLY	9
 
+#define DECODE_DPRINT(f, ...)	printf(f, ## __VA_ARGS__)
+
+#define DECODE_ERR(f, ...)				\
+{							\
+	fprintf(stderr, "%s:%d:\n", __FILE__, __LINE__);\
+	fprintf(stderr, "error! decode: %s: "	\
+		f, __func__, ## __VA_ARGS__);		\
+	exit(EXIT_FAILURE);				\
+}
+
 typedef struct decoder_context_sps {
 	unsigned valid:1;
 
@@ -162,9 +172,15 @@ typedef struct macro_sub_block {
 typedef struct macroblock {
 	unsigned mb_type:5;
 
+	unsigned slice_type:4;
+
 	unsigned transform_size_8x8_flag:1;
 
 	signed   mb_qp_delta:6;
+
+	uint8_t luma_has_transform_coeffs[16];
+
+	int QP_Y, QPcb, QPcr;
 
 	union {
 		struct {
@@ -211,6 +227,10 @@ typedef struct nal_header {
 	unsigned unit_type:5;
 } nal_header;
 
+typedef struct frame_data {
+	macroblock *macroblocks;
+} frame_data;
+
 typedef struct decoder_context {
 	bitstream_reader reader;
 
@@ -229,6 +249,10 @@ typedef struct decoder_context {
 	slice_header sh;
 	slice_data   sd;
 
+	frame_data *frames[4];
+
+	int get_mb_slice_constraint;
+
 	int NAL_start_delim;
 } decoder_context;
 
@@ -241,5 +265,7 @@ void decoder_set_notify(decoder_context *decoder,
 void decode_current_slice(decoder_context *decoder, unsigned last_mb_id);
 
 size_t decoder_image_frame_size(decoder_context *decoder);
+
+void mb_apply_deblocking(decoder_context *decoder, unsigned mb_id);
 
 #endif // DECODER_H

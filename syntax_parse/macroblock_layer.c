@@ -110,8 +110,7 @@ void macroblock_layer(const decoder_context *decoder, unsigned mb_id)
 	bitstream_reader *reader = (void *) &decoder->reader;
 	const decoder_context_sps *sps = decoder->active_sps;
 	const decoder_context_pps *pps = decoder->active_pps;
-	unsigned mb_id_in_slice = mb_id - decoder->sh.first_mb_in_slice;
-	macroblock *mb = &decoder->sd.macroblocks[mb_id_in_slice];
+	macroblock *mb = &decoder->frames[0]->macroblocks[mb_id];
 	unsigned ChromaArrayType = ChromaArrayType();
 	unsigned CodedBlockPatternLuma = 0;
 	unsigned CodedBlockPatternChroma = 0;
@@ -140,6 +139,7 @@ void macroblock_layer(const decoder_context *decoder, unsigned mb_id)
 	}
 
 	mb->mb_type = mb_type;
+	mb->slice_type = decoder->sh.slice_type;
 
 	switch (decoder->active_sps->chroma_format_idc) {
 	case YUV400:

@@ -31,5 +31,6 @@ h264_decode_SOURCES =					\
 	transforms/intra_prediction_luma_4x4.c		\
 	transforms/intra_prediction_luma_16x16.c	\
 	transforms/intra_prediction_chroma.c		\
+	deblocking_filter/deblocking_filter.c		\
 	decoder.c					\
 	main.c

@@ -252,6 +252,10 @@ void parse_SPS(decoder_context *decoder)
 	SYNTAX_IPRINT("frame_mbs_only_flag = %u\n",
 		      sps->frame_mbs_only_flag);
 
+	if (sps->max_num_ref_frames >= ARRAY_SIZE(decoder->frames) - 1) {
+		SYNTAX_ERR("Too many ref frames\n");
+	}
+
 	if (!sps->frame_mbs_only_flag) {
 		sps->mb_adaptive_frame_field_flag = bitstream_read_u(reader, 1);
 

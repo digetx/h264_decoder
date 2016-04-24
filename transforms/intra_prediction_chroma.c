@@ -58,8 +58,7 @@ void mb_apply_chroma_prediction(const decoder_context *decoder, int plane_id,
 				unsigned mb_id, int16_t residual[16][16],
 				unsigned pred_mode)
 {
-	unsigned mb_id_in_slice = mb_id - decoder->sh.first_mb_in_slice;
-	macroblock *mb = &decoder->sd.macroblocks[mb_id_in_slice];
+	macroblock *mb = &decoder->frames[0]->macroblocks[mb_id];
 	macroblock *src_mb_left, *src_mb_up;
 	int bit_depth = decoder->active_sps->bit_depth_chroma_minus8 + 8;
 	uint8_t *chroma_decoded;
