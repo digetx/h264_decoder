@@ -55,7 +55,8 @@ static const int h_sub_id(int sub_mb_id)
 }
 
 void mb_apply_chroma_prediction(const decoder_context *decoder, int plane_id,
-				unsigned mb_id, int16_t residual[16][16])
+				unsigned mb_id, int16_t residual[16][16],
+				unsigned pred_mode)
 {
 	unsigned mb_id_in_slice = mb_id - decoder->sh.first_mb_in_slice;
 	macroblock *mb = &decoder->sd.macroblocks[mb_id_in_slice];
@@ -68,10 +69,9 @@ void mb_apply_chroma_prediction(const decoder_context *decoder, int plane_id,
 	int pred;
 	int i, j;
 
-	TRANSFORM_DPRINT("intra_chroma_pred_mode %d\n",
-			 mb->intra_chroma_pred_mode);
+	TRANSFORM_DPRINT("intra_chroma_pred_mode %d\n", pred_mode);
 
-	switch (mb->intra_chroma_pred_mode) {
+	switch (pred_mode) {
 	case Intra_Chroma_DC:
 		for (sub_mb = 0; sub_mb < 4; sub_mb++) {
 			src_mb_up = src_mb_left = NULL;

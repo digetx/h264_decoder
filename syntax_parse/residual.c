@@ -59,7 +59,11 @@ static signed get_total_coeff_chroma_AC_left(const decoder_context *decoder,
 		return MB_UNAVAILABLE;
 	}
 
-	return src_mb->chroma_AC[plane_id][sub_mb_id].totalcoeff;
+	if (plane_id == 0) {
+		return src_mb->chroma_U_AC[sub_mb_id].totalcoeff;
+	} else {
+		return src_mb->chroma_V_AC[sub_mb_id].totalcoeff;
+	}
 }
 
 static signed get_total_coeff_chroma_AC_up(const decoder_context *decoder,
@@ -74,7 +78,11 @@ static signed get_total_coeff_chroma_AC_up(const decoder_context *decoder,
 		return MB_UNAVAILABLE;
 	}
 
-	return src_mb->chroma_AC[plane_id][sub_mb_id].totalcoeff;
+	if (plane_id == 0) {
+		return src_mb->chroma_U_AC[sub_mb_id].totalcoeff;
+	} else {
+		return src_mb->chroma_V_AC[sub_mb_id].totalcoeff;
+	}
 }
 
 static unsigned residual_block(const decoder_context *decoder, macroblock *mb,
@@ -178,20 +186,21 @@ void residual(const decoder_context *decoder, macroblock *mb, unsigned mb_id,
 
 	if (ChromaArrayType == 1 || ChromaArrayType == 2) {
 		for (iCbCr = 0; iCbCr < 2; iCbCr++) {
-			int16_t *chroma_DC = mb->chroma_DC[iCbCr].coeffs;
+			macro_sub_block *submb =
+				iCbCr ? &mb->chroma_V_DC : &mb->chroma_U_DC;
 
 			if (!(CBPChroma & 3) || startIdx != 0) {
-				mb->chroma_DC[iCbCr].totalcoeff = 0;
+				submb->totalcoeff = 0;
 				continue;
 			}
 
 // 			SYNTAX_DPRINT("chroma_DC ");
 // 			SYNTAX_DPRINT("coeffNum = %u nCA %d nCB %d\n", 0, 0, -1);
 			/* chroma DC residual present */
-			mb->chroma_DC[iCbCr].totalcoeff =
+			submb->totalcoeff =
 				residual_block(decoder, mb, 0, 3, 4,
 					(ChromaArrayType == 1) ? -1 : -2,
-					chroma_DC);
+					submb->coeffs);
 		}
 
 		startIdx = max(0, startIdx - 1);
@@ -199,10 +208,11 @@ void residual(const decoder_context *decoder, macroblock *mb, unsigned mb_id,
 
 		for (iCbCr = 0; iCbCr < 2; iCbCr++) {
 			for (i4x4 = 0; i4x4 < 4; i4x4++) {
-				int16_t *chroma_AC = mb->chroma_AC[iCbCr][i4x4].coeffs;
+				macro_sub_block *submb =
+					iCbCr ? mb->chroma_V_AC : mb->chroma_U_AC;
 
 				if (!(CBPChroma & 2)) {
-					mb->chroma_AC[iCbCr][i4x4].totalcoeff = 0;
+					submb[i4x4].totalcoeff = 0;
 					continue;
 				}
 
@@ -213,19 +223,24 @@ void residual(const decoder_context *decoder, macroblock *mb, unsigned mb_id,
 				nC = coeffNum(reader, nCA, nCB);
 
 // 				SYNTAX_DPRINT("chroma_AC ");
-				mb->chroma_AC[iCbCr][i4x4].totalcoeff =
+				submb[i4x4].totalcoeff =
 					residual_block(decoder, mb, startIdx,
-						endIdx, 15, nC, chroma_AC);
+						endIdx, 15, nC, submb[i4x4].coeffs);
 			}
 		}
 	} else if (ChromaArrayType == 3) {
 		SYNTAX_ERR("Shouldn't be here");
 	} else {
 		for (iCbCr = 0; iCbCr < 2; iCbCr++) {
-			mb->chroma_DC[iCbCr].totalcoeff = 0;
+			macro_sub_block *submb_dc =
+				iCbCr ? &mb->chroma_V_DC : &mb->chroma_U_DC;
+			macro_sub_block *submb_ac =
+				iCbCr ? mb->chroma_V_AC : mb->chroma_U_AC;
+
+			submb_dc->totalcoeff = 0;
 
 			for (i4x4 = 0; i4x4 < 4; i4x4++) {
-				mb->chroma_AC[iCbCr][i4x4].totalcoeff = 0;
+				submb_ac[i4x4].totalcoeff = 0;
 			}
 		}
 	}

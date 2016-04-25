@@ -163,6 +163,7 @@ static int decode_macroblock(decoder_context *decoder, unsigned mb_id, int QPY,
 	unsigned mb_id_in_slice = mb_id - decoder->sh.first_mb_in_slice;
 	macroblock *mb = &decoder->sd.macroblocks[mb_id_in_slice];
 	int partPredMode = MbPartPredMode(mb, decoder->sh.slice_type);
+	unsigned chroma_pred_mode = mb->intra_chroma_pred_mode;
 	int32_t QP_Y, QPcb, QPcr, qPOffsetCb, qPOffsetCr, qPi;
 	int TransformBypassModeFlag = 0;
 	int16_t residual[16][16];
@@ -260,22 +261,24 @@ static int decode_macroblock(decoder_context *decoder, unsigned mb_id, int QPY,
 	}
 
 	for (plane_id = 0; plane_id < 2; plane_id++) {
+		macro_sub_block *chroma_DC =
+			plane_id ? &mb->chroma_V_DC : &mb->chroma_U_DC;
 		int QPC = plane_id ? QPcr : QPcb;
 
-		if (mb->chroma_DC[plane_id].totalcoeff) {
+		if (chroma_DC->totalcoeff) {
 			DECODE_DPRINT("decoding chroma DC %s:\n",
 				      plane_id ? "red" : "blue");
 
 			if (!TransformBypassModeFlag) {
 				int16_t transformed[4];
 
-				inv_transform_chroma_DC(mb->chroma_DC[plane_id].coeffs,
+				inv_transform_chroma_DC(chroma_DC->coeffs,
 							transformed);
 
 				inv_scale_chroma_DC(decoder, transformed,
 						    residual_DC, QPC);
 			} else {
-				inv_scale_chroma_DC(decoder, mb->chroma_DC[plane_id].coeffs,
+				inv_scale_chroma_DC(decoder, chroma_DC->coeffs,
 						    residual_DC, QPC);
 			}
 		} else {
@@ -283,17 +286,20 @@ static int decode_macroblock(decoder_context *decoder, unsigned mb_id, int QPY,
 		}
 
 		for (sub_mb_id = 0; sub_mb_id < 4; sub_mb_id++) {
-			if (mb->chroma_AC[plane_id][sub_mb_id].totalcoeff == 0) {
+			macro_sub_block *chroma_AC =
+				plane_id ? mb->chroma_V_AC : mb->chroma_U_AC;
+
+			if (chroma_AC[sub_mb_id].totalcoeff == 0) {
 				bzero(residual[sub_mb_id], sizeof(residual[sub_mb_id]));
 
 				if (residual_DC[sub_mb_id] == 0) {
 					continue;
 				}
 			} else {
-				unzigzag_4x4_15(mb->chroma_AC[plane_id][sub_mb_id].coeffs);
+				unzigzag_4x4_15(chroma_AC[sub_mb_id].coeffs);
 
 				if (!TransformBypassModeFlag) {
-					inv_scale_4x4(decoder, mb->chroma_AC[plane_id][sub_mb_id].coeffs,
+					inv_scale_4x4(decoder, chroma_AC[sub_mb_id].coeffs,
 						      residual[sub_mb_id], QPC);
 				}
 			}
@@ -308,7 +314,8 @@ static int decode_macroblock(decoder_context *decoder, unsigned mb_id, int QPY,
 			}
 		}
 
-		mb_apply_chroma_prediction(decoder, plane_id, mb_id, residual);
+		mb_apply_chroma_prediction(decoder, plane_id, mb_id, residual,
+					   chroma_pred_mode);
 	}
 
 	return QPY;

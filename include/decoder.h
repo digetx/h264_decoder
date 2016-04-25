@@ -160,23 +160,41 @@ typedef struct macro_sub_block {
 } macro_sub_block;
 
 typedef struct macroblock {
-	uint32_t mb_type;
+	unsigned mb_type:5;
 
 	unsigned transform_size_8x8_flag:1;
 
 	signed   mb_qp_delta:6;
 
-	unsigned luma_pred_mode[16];
-	macro_sub_block luma_DC;
-	macro_sub_block luma_AC[16];
+	union {
+		struct {
+			unsigned luma_pred_mode[16];
+			macro_sub_block luma_DC;
+			macro_sub_block luma_AC[16];
+		};
 
-	unsigned intra_chroma_pred_mode:2;
-	macro_sub_block chroma_DC[2];
-	macro_sub_block chroma_AC[2][4];
+		uint8_t luma_decoded[16][16];
+	};
 
-	uint8_t luma_decoded[16][16];
-	uint8_t chroma_U_decoded[4][16];
-	uint8_t chroma_V_decoded[4][16];
+	union {
+		struct {
+			unsigned intra_chroma_pred_mode:2;
+			macro_sub_block chroma_U_DC;
+			macro_sub_block chroma_U_AC[4];
+		};
+
+		uint8_t chroma_U_decoded[4][16];
+	};
+
+	union {
+		struct {
+			macro_sub_block chroma_V_DC;
+			macro_sub_block chroma_V_AC[4];
+		};
+
+		uint8_t chroma_V_decoded[4][16];
+	};
+
 } macroblock;
 
 typedef struct slice_data {

@@ -117,26 +117,29 @@ void macroblock_layer(const decoder_context *decoder, unsigned mb_id)
 	unsigned CodedBlockPatternChroma = 0;
 	unsigned noSubMbPartSizeLessThan8x8Flag = 1;
 	unsigned MbWidthC, MbHeightC;
+	unsigned mb_type;
 	int32_t mb_qp_delta;
 	int i;
 
 	mb->transform_size_8x8_flag = 0;
 
 	if (CABAC_MODE) {
-		mb->mb_type = bitstream_read_ae(reader);
+		mb_type = bitstream_read_ae(reader);
 	} else {
-		mb->mb_type = bitstream_read_ue(reader);
+		mb_type = bitstream_read_ue(reader);
 	}
 
 	switch (decoder->sh.slice_type) {
 	case I:
 		SYNTAX_IPRINT("MacroBlock type %d = %s\n",
-			      mb->mb_type, MB_TYPE_I(mb));
+			      mb_type, MB_TYPE_I(mb));
 		break;
 	default:
 		SYNTAX_ERR("MacroBlock slice_type unimplemented\n");
 		break;
 	}
+
+	mb->mb_type = mb_type;
 
 	switch (decoder->active_sps->chroma_format_idc) {
 	case YUV400:
@@ -275,17 +278,15 @@ void macroblock_layer(const decoder_context *decoder, unsigned mb_id)
 
 		mb->mb_qp_delta = 0;
 		mb->luma_DC.totalcoeff = 0;
+		mb->chroma_U_DC.totalcoeff = 0;
+		mb->chroma_V_DC.totalcoeff = 0;
 
 		for (i = 0; i < 16; i++) {
 			mb->luma_AC[i].totalcoeff = 0;
 
-			if (i < 2) {
-				mb->chroma_DC[i].totalcoeff = 0;
-			}
-
 			if (i < 4) {
-				mb->chroma_AC[0][i].totalcoeff = 0;
-				mb->chroma_AC[1][i].totalcoeff = 0;
+				mb->chroma_U_AC[i].totalcoeff = 0;
+				mb->chroma_V_AC[i].totalcoeff = 0;
 			}
 		}
 		return;

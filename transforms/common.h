@@ -57,7 +57,8 @@ void unzigzag_4x4(int16_t coeffLevel[16]);
 void unzigzag_4x4_15(int16_t coeffLevel[16]);
 
 void mb_apply_chroma_prediction(const decoder_context *decoder, int plane_id,
-				unsigned mb_id, int16_t residual[16][16]);
+				unsigned mb_id, int16_t residual[16][16],
+				unsigned pred_mode);
 
 void mb_apply_luma_prediction_16x16(const decoder_context *decoder,
 				    unsigned mb_id, int Intra16x16PredMode,

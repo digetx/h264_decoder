@@ -39,18 +39,23 @@ void mb_apply_luma_prediction_4x4(const decoder_context *decoder,
 	macroblock *src_mb_left, *src_mb_up;
 	int bit_depth = decoder->active_sps->bit_depth_luma_minus8 + 8;
 	int sub_mb, sub_mb_id_left, sub_mb_id_up;
+	unsigned luma_pred_mode[16];
 	uint8_t tmp[9];
 	int pred;
 	int i, j;
 
 	for (sub_mb = 0; sub_mb < 16; sub_mb++) {
+		luma_pred_mode[sub_mb] = mb->luma_pred_mode[sub_mb];
+	}
+
+	for (sub_mb = 0; sub_mb < 16; sub_mb++) {
 		src_mb_left = mb;
 		src_mb_up = mb;
 
-		TRANSFORM_DPRINT("mb->luma_pred_mode[%d] %d\n",
-				 sub_mb, mb->luma_pred_mode[sub_mb]);
+		TRANSFORM_DPRINT("luma_pred_mode[%d] %d\n",
+				 sub_mb, luma_pred_mode[sub_mb]);
 
-		switch (mb->luma_pred_mode[sub_mb]) {
+		switch (luma_pred_mode[sub_mb]) {
 		case Intra_4x4_Vertical:
 			sub_mb_id_up = get_sub_id_4x4_up(decoder, &src_mb_up, mb_id, sub_mb);
 
