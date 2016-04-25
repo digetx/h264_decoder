@@ -1,8 +1,8 @@
 .*
 *.o
 h264_decode
-test.h264
-test.mp4
+*.h264
+*.mp4
 Makefile
 Makefile.in
 aclocal.m4
