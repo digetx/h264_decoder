@@ -55,7 +55,15 @@ int is_NAL_start_code(bitstream_reader *reader)
 {
 	uint32_t data = bitstream_read_next_word(reader);
 
-	return (be32toh(data) >> 8 == NAL_START_CODE);
+	if (be32toh(data) == NAL_START_CODE) {
+		return 4;
+	}
+
+	if (be32toh(data) >> 8 == NAL_START_CODE) {
+		return 3;
+	}
+
+	return 0;
 }
 
 int seek_to_NAL_start(bitstream_reader *reader)
@@ -73,7 +81,7 @@ int seek_to_NAL_start(bitstream_reader *reader)
 			return 0;
 		}
 
-		bitstream_reader_inc_offset(reader, NAL_found ? 3 : 1);
+		bitstream_reader_inc_offset(reader, NAL_found ?: 1);
 
 		if (NAL_found) {
 			SYNTAX_IPRINT("found NAL_start_code at offset 0x%X\n",
