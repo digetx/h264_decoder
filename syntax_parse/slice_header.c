@@ -193,22 +193,22 @@ void parse_slice_header(decoder_context *decoder)
 		uint32_t modification_of_pic_nums_idc;
 		uint32_t abs_diff_pic_num_minus1;
 		uint32_t long_term_pic_num;
+		int predicted_picture = decoder->sh.frame_num;
+		int remapped_picture;
+		int refIdxL = 0;
 		int l1 = 0;
 
 		switch (decoder->sh.slice_type) {
 		case P:
 		case B:
 		case SP:
-		case P_ONLY:
-		case B_ONLY:
-		case SP_ONLY:
 			ref_pic_list_modification_flag_l0 = bitstream_read_u(reader, 1);
 
 			SYNTAX_IPRINT("ref_pic_list_modification_flag_l0 = %u\n",
 				      ref_pic_list_modification_flag_l0);
 
 			if (!ref_pic_list_modification_flag_l0) {
-				break;
+				goto flag_l1;
 			}
 pics_num:
 			modification_of_pic_nums_idc = bitstream_read_ue(reader);
@@ -222,6 +222,14 @@ pics_num:
 
 				SYNTAX_IPRINT("abs_diff_pic_num_minus1 = %u\n",
 					      abs_diff_pic_num_minus1);
+
+				if (modification_of_pic_nums_idc) {
+					remapped_picture = predicted_picture + abs_diff_pic_num_minus1;
+
+					SYNTAX_IPRINT("refIdxL%d <- %d\n", l1, remapped_picture);
+
+					predicted_picture = remapped_picture;
+				}
 				goto pics_num;
 			case 2:
 				long_term_pic_num = bitstream_read_ue(reader);
@@ -233,7 +241,7 @@ pics_num:
 				if (l1) {
 					break;
 				}
-
+flag_l1:
 				switch (decoder->sh.slice_type) {
 				case B:
 				case B_ONLY:
