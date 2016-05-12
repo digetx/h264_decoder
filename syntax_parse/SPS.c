@@ -56,6 +56,7 @@ void parse_SPS(decoder_context *decoder)
 	unsigned constraint_set4_flag;
 	unsigned constraint_set5_flag;
 	unsigned level_idc;
+	unsigned max_ref_frames;
 	int i;
 
 	profile_idc	     = bitstream_read_u(reader, 8);
@@ -252,8 +253,11 @@ void parse_SPS(decoder_context *decoder)
 	SYNTAX_IPRINT("frame_mbs_only_flag = %u\n",
 		      sps->frame_mbs_only_flag);
 
-	if (sps->max_num_ref_frames >= ARRAY_SIZE(decoder->frames) - 1) {
-		SYNTAX_ERR("Too many ref frames\n");
+	max_ref_frames = ARRAY_SIZE(decoder->frames) - 1;
+
+	if (sps->max_num_ref_frames > max_ref_frames) {
+		SYNTAX_ERR("Too many ref frames %d vs %d\n",
+			   sps->max_num_ref_frames, max_ref_frames);
 	}
 
 	if (!sps->frame_mbs_only_flag) {
