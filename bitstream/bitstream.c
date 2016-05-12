@@ -36,7 +36,7 @@
 	fprintf(stderr, "%s:%d:\n", __FILE__, __LINE__);		\
 	fprintf(stderr, "bitstream_reader: " f, ## __VA_ARGS__);	\
 	reader->error = 1;						\
-	exit(EXIT_FAILURE);						\
+	abort();							\
 }
 
 #if __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
@@ -381,7 +381,7 @@ unsigned bitstream_skip_leading_zeros(bitstream_reader *reader)
 	return 0;
 }
 
-static uint32_t exp_golomb_codenum(uint8_t exp, uint16_t val)
+static uint32_t exp_golomb_codenum(unsigned exp, uint32_t val)
 {
 	uint32_t ret = (1l << exp) - 1 + val;
 
@@ -392,13 +392,14 @@ static uint32_t exp_golomb_codenum(uint8_t exp, uint16_t val)
 
 uint32_t bitstream_read_ue(bitstream_reader *reader)
 {
-	uint8_t leading_zeros;
-	uint16_t val = 0;
+	unsigned leading_zeros;
+	uint32_t val = 0;
 
 	leading_zeros = bitstream_skip_leading_zeros(reader);
 
-	if (leading_zeros > 16) {
-		BITSTREAM_ERR("Exp-golomb parse error\n");
+	if (leading_zeros > 31) {
+		BITSTREAM_ERR("Exp-golomb parse error leading_zeros = %d\n",
+			      leading_zeros);
 	}
 
 	if (leading_zeros) {
