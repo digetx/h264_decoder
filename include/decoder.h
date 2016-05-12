@@ -39,7 +39,7 @@
 #define DECODE_ERR(f, ...)				\
 {							\
 	fprintf(stderr, "%s:%d:\n", __FILE__, __LINE__);\
-	fprintf(stderr, "error! decode: %s: "	\
+	fprintf(stderr, "error! decode: %s: "		\
 		f, __func__, ## __VA_ARGS__);		\
 	exit(EXIT_FAILURE);				\
 }
@@ -249,7 +249,7 @@ typedef struct decoder_context {
 	slice_header sh;
 	slice_data   sd;
 
-	frame_data *frames[4];
+	frame_data *frames[1 + 16];
 
 	int get_mb_slice_constraint;
 
