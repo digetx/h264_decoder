@@ -59,13 +59,13 @@ void bitstream_reader_selftest(void)
 
 	val = bitstream_read_ue(&reader);
 
-	printf("codenum = %u\n", val);
+	BITSTREAM_DPRINT("codenum = %u\n", val);
 
 	assert(val == 30);
 
 	val = bitstream_read_ue(&reader);
 
-	printf("codenum = %u\n", val);
+	BITSTREAM_DPRINT("codenum = %u\n", val);
 
 	assert(val == 0);
 
@@ -73,7 +73,7 @@ void bitstream_reader_selftest(void)
 
 	val = bitstream_read_ue(&reader);
 
-	printf("codenum = %u\n", val);
+	BITSTREAM_DPRINT("codenum = %u\n", val);
 
 	assert(val == 97);
 
@@ -82,13 +82,13 @@ void bitstream_reader_selftest(void)
 
 	val = bitstream_read_ue(&reader);
 
-	printf("codenum = %u\n", val);
+	BITSTREAM_DPRINT("codenum = %u\n", val);
 
 	assert(val == 17);
 
 	val = bitstream_read_ue(&reader);
 
-	printf("codenum = %u\n", val);
+	BITSTREAM_DPRINT("codenum = %u\n", val);
 
 	assert(val == 30);
 
@@ -98,7 +98,7 @@ void bitstream_reader_selftest(void)
 
 	for (i = 0; i < 64; i++) {
 		unsigned cmp = ((be64toh(test) >> (63 - i))) & 1;
-		printf("i = %d cmp 0x%X\n", i, cmp);
+		BITSTREAM_DPRINT("i = %d cmp 0x%X\n", i, cmp);
 		assert(bitstream_read_u(&reader, 1) == cmp);
 	}
 
@@ -108,7 +108,7 @@ void bitstream_reader_selftest(void)
 
 	for (i = 0; i < 12; i++) {
 		unsigned cmp = ((be64toh(test) >> (64 - 5 * (i + 1)))) & 31;
-		printf("i = %d cmp 0x%X\n", i, cmp);
+		BITSTREAM_DPRINT("i = %d cmp 0x%X\n", i, cmp);
 		assert(bitstream_read_u(&reader, 5) == cmp);
 	}
 
@@ -116,7 +116,7 @@ void bitstream_reader_selftest(void)
 
 	for (i = 0; i < 16; i++) {
 		unsigned cmp = ((be64toh(test) >> (64 - 4 * (i + 1)))) & 15;
-		printf("i = %d cmp 0x%X\n", i, cmp);
+		BITSTREAM_DPRINT("i = %d cmp 0x%X\n", i, cmp);
 		assert(bitstream_read_u(&reader, 4) == cmp);
 	}
 
@@ -125,11 +125,11 @@ void bitstream_reader_selftest(void)
 
 	for (i = 0; i < 15; i++) {
 		unsigned cmp = (((be64toh(test) << 1) >> (64 - 4 * (i + 1)))) & 15;
-		printf("i = %d cmp 0x%X\n", i, cmp);
+		BITSTREAM_DPRINT("i = %d cmp 0x%X\n", i, cmp);
 		assert(bitstream_read_u(&reader, 4) == cmp);
 	}
 
-	printf("%s passed\n", __func__);
+	BITSTREAM_DPRINT("%s passed\n", __func__);
 }
 
 void bitstream_init(bitstream_reader *reader, void *data, uint32_t size)
